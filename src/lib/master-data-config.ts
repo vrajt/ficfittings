@@ -11,7 +11,7 @@ interface MasterConfig<T> {
 
 const auditColumns: ColumnDef<any>[] = [
     { accessorKey: 'createdBy', header: 'Created By' },
-    { accessorKey: 'date', header: 'Created At' },
+    // Removed duplicate date column. The main `date` column in each config will be used.
     { accessorKey: 'updatedBy', header: 'Updated By' },
     { accessorKey: 'updatedAt', header: 'Updated At' },
 ];
@@ -24,6 +24,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
       { accessorKey: 'code', header: 'Code' },
       { accessorKey: 'name', header: 'Name' },
       { accessorKey: 'description', header: 'Description' },
+      { accessorKey: 'date', header: 'Created At' },
       ...auditColumns
     ],
     data: genericMasterData.generic,
@@ -35,6 +36,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
       { accessorKey: 'code', header: 'Code' },
       { accessorKey: 'name', header: 'Unit Name' },
       { accessorKey: 'description', header: 'Description' },
+      { accessorKey: 'date', header: 'Created At' },
       ...auditColumns
     ],
     data: genericMasterData.units,
@@ -46,6 +48,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Grade Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData.grades,
@@ -57,6 +60,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Product Grade Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData['product-grades'],
@@ -67,6 +71,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
     columns: [
       { accessorKey: 'name', header: 'Remark' },
       { accessorKey: 'description', header: 'Details' },
+      { accessorKey: 'date', header: 'Created At' },
       ...auditColumns
     ],
     data: genericMasterData['tc-remarks'],
@@ -78,6 +83,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
       { accessorKey: 'name', header: 'Name' },
       { accessorKey: 'address', header: 'Address' },
       { accessorKey: 'contactPerson', header: 'Contact Person' },
+      { accessorKey: 'date', header: 'Created At' },
       ...auditColumns
     ],
     data: customerData,
@@ -89,6 +95,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Standard Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData['dimension-standards'],
@@ -100,6 +107,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Material Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData['start-materials'],
@@ -111,6 +119,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Laboratory Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData.laboratories,
@@ -122,6 +131,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Test Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData['heat-tests'],
@@ -133,6 +143,7 @@ export const masterDataConfig: Record<string, MasterConfig<any>> = {
         { accessorKey: 'code', header: 'Code' },
         { accessorKey: 'name', header: 'Test Name' },
         { accessorKey: 'description', header: 'Description' },
+        { accessorKey: 'date', header: 'Created At' },
         ...auditColumns
     ],
     data: genericMasterData['other-tests'],
@@ -146,7 +157,9 @@ export const certificateConfig: MasterConfig<Certificate> = {
       { accessorKey: 'certificateNumber', header: 'Certificate No.' },
       { accessorKey: 'customerName', header: 'Customer' },
       { accessorKey: 'date', header: 'Date' },
-      ...auditColumns
+      { accessorKey: 'createdBy', header: 'Created By' },
+      { accessorKey: 'updatedBy', header: 'Updated By' },
+      { accessorKey: 'updatedAt', header: 'Updated At' },
     ],
     data: certificateData,
   };
