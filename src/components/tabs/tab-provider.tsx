@@ -116,7 +116,7 @@ export function TabBar() {
   }
 
   return (
-    <div className="flex border-b bg-muted/30">
+    <div className="flex border-b" style={{backgroundColor: 'hsl(var(--tab-bar-background))'}}>
       {tabs.map(tab => (
         <div
           key={tab.id}
