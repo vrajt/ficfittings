@@ -12,6 +12,7 @@ import {
   ColumnFiltersState,
 } from '@tanstack/react-table';
 import * as XLSX from 'xlsx';
+import type { DateRange } from "react-day-picker";
 
 import {
   Table,
@@ -36,6 +37,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import { DatePickerWithRange } from './ui/date-range-picker';
 
 
 interface DataTableProps<TData, TValue> {
@@ -44,7 +46,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
 }
 
-export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft' }, TValue>({
+export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft', date?: string }, TValue>({
   data,
   columns: propColumns,
   isLoading = false,
@@ -52,6 +54,18 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
+
+  React.useEffect(() => {
+    const dateColumn = table.getColumn('date');
+    if (dateColumn) {
+      if (dateRange?.from && dateRange?.to) {
+        dateColumn.setFilterValue([dateRange.from, dateRange.to]);
+      } else {
+        dateColumn.setFilterValue(undefined);
+      }
+    }
+  }, [dateRange, /*table*/]);
 
   const actionColumn: ColumnDef<TData> = {
     id: 'actions',
@@ -112,6 +126,17 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    filterFns: {
+        dateRange: (row, columnId, value) => {
+          const date = new Date(row.getValue(columnId));
+          const [start, end] = value as [Date, Date];
+          const startDate = new Date(start);
+          startDate.setHours(0,0,0,0);
+          const endDate = new Date(end);
+          endDate.setHours(23,59,59,999);
+          return date >= startDate && date <= endDate;
+        },
+    },
     state: {
       columnFilters,
       globalFilter,
@@ -186,17 +211,27 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     );
   }
 
+  const hasDateColumn = columns.some(c => (c as any).accessorKey === 'date');
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Filter records..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="w-full sm:max-w-sm pl-9"
-          />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Filter records..."
+                    value={globalFilter}
+                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    className="w-full sm:max-w-xs pl-9"
+                />
+            </div>
+            {hasDateColumn && (
+                <DatePickerWithRange
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                />
+            )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
             <input
