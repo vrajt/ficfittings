@@ -121,21 +121,28 @@ export function TabBar() {
   }
 
   return (
-    <div className="flex border-b bg-background">
+    <div className="flex border-b bg-muted/30">
       {tabs.map(tab => (
         <div
           key={tab.id}
           onClick={() => handleSetActiveTab(tab.id)}
           className={cn(
-            'flex items-center gap-2 py-2 px-4 border-r cursor-pointer text-sm',
-            activeTab === tab.id ? 'bg-primary/10 text-primary font-semibold border-b-2 border-primary -mb-px' : 'hover:bg-muted'
+            'flex items-center gap-2 py-2 px-4 border-r cursor-pointer text-sm group',
+            activeTab === tab.id 
+              ? 'bg-background text-primary font-semibold shadow-inner' 
+              : 'text-muted-foreground hover:bg-muted/80'
           )}
         >
           <span>{tab.title}</span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-5 w-5 rounded-full"
+            className={cn(
+                'h-5 w-5 rounded-full',
+                activeTab === tab.id 
+                  ? 'hover:bg-primary/20'
+                  : 'text-muted-foreground/50 hover:bg-muted-foreground/20'
+              )}
             onClick={(e) => {
               e.stopPropagation();
               removeTab(tab.id);
@@ -170,4 +177,3 @@ export function TabContent({ initialChildren }: { initialChildren: React.ReactNo
         </>
     );
 }
-
