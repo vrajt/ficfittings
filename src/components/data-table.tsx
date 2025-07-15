@@ -222,7 +222,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
