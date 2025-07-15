@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 export type MasterType =
+  | 'generic'
   | 'units'
   | 'grades'
   | 'product-grades'
@@ -24,7 +25,7 @@ export type NavItem = {
 interface BaseEntity {
   id: string;
   createdBy: string;
-  createdAt: string;
+  date: string; // Changed from createdAt
   updatedBy: string;
   updatedAt: string;
 }
@@ -46,6 +47,5 @@ export type Customer = BaseEntity & {
 export type Certificate = BaseEntity & {
   certificateNumber: string;
   customerName: string;
-  date: string;
   status: 'Draft' | 'Issued';
 };

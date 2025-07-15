@@ -2,19 +2,27 @@ import { GenericMaster, Customer, Certificate } from './types';
 
 const defaultAuditFields = {
   createdBy: 'Admin',
-  createdAt: '2024-07-20',
+  date: '2024-07-20',
   updatedBy: 'Admin',
   updatedAt: '2024-07-20',
 };
 
 const generateAuditFields = (index: number) => ({
   createdBy: index % 2 === 0 ? 'Admin' : 'UserX',
-  createdAt: `2024-07-${10 + index}`,
+  date: `2024-07-${(10 + index) % 28 + 1}`,
   updatedBy: index % 3 === 0 ? 'Admin' : 'UserY',
-  updatedAt: `2024-07-${20 + index}`,
+  updatedAt: `2024-07-${(20 + index) % 28 + 1}`,
 });
 
 export const genericMasterData: Record<string, GenericMaster[]> = {
+  generic: Array.from({ length: 5 }, (_, i) => ({
+    id: `GEN${String(i + 1).padStart(3, '0')}`,
+    name: `Generic Item ${i + 1}`,
+    code: `GEN-${i + 1}`,
+    description: `Description for Generic Item ${i + 1}`,
+    status: i % 2 === 0 ? 'Active' : 'Inactive',
+    ...generateAuditFields(i),
+  })),
   units: Array.from({ length: 15 }, (_, i) => ({
     id: `U${String(i + 1).padStart(3, '0')}`,
     name: `Unit ${i + 1}`,

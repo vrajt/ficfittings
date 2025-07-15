@@ -36,6 +36,7 @@ export const navConfig: NavItem[] = [
     href: '#',
     icon: Settings,
     children: [
+      { title: 'Generic Master', href: '/masters/generic', icon: Shapes, masterType: 'generic' },
       { title: 'Units', href: '/masters/units', icon: Scale, masterType: 'units' },
       { title: 'Grades', href: '/masters/grades', icon: Award, masterType: 'grades' },
       { title: 'Product Grades', href: '/masters/product-grades', icon: Medal, masterType: 'product-grades' },

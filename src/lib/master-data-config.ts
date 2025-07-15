@@ -11,12 +11,23 @@ interface MasterConfig<T> {
 
 const auditColumns: ColumnDef<any>[] = [
     { accessorKey: 'createdBy', header: 'Created By' },
-    { accessorKey: 'createdAt', header: 'Created At' },
+    { accessorKey: 'date', header: 'Created At' },
     { accessorKey: 'updatedBy', header: 'Updated By' },
     { accessorKey: 'updatedAt', header: 'Updated At' },
 ];
 
 export const masterDataConfig: Record<string, MasterConfig<any>> = {
+  generic: {
+    title: 'Generic Master',
+    description: 'Manage generic master data.',
+    columns: [
+      { accessorKey: 'code', header: 'Code' },
+      { accessorKey: 'name', header: 'Name' },
+      { accessorKey: 'description', header: 'Description' },
+      ...auditColumns
+    ],
+    data: genericMasterData.generic,
+  },
   units: {
     title: 'Unit Master',
     description: 'Manage measurement units used in certificates.',
