@@ -13,7 +13,7 @@ export default function CertificatesPage() {
         actionButtonText="New Certificate"
         actionButtonLink="/certificates/new"
       />
-      <div className="flex-grow flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <DataTable columns={certificateConfig.columns} data={certificateConfig.data} />
       </div>
     </div>

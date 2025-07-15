@@ -187,7 +187,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             </Button>
         </div>
       </div>
-      <div className="flex-grow rounded-lg border overflow-hidden">
+      <div className="flex-1 rounded-lg border overflow-hidden">
         <ScrollArea className="h-full w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">

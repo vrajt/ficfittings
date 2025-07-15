@@ -22,7 +22,7 @@ export default function MasterTypePage() {
         actionButtonText={`Add New ${config.title.replace(' Master', '')}`}
         actionButtonLink={`/masters/${masterType}/new`}
       />
-      <div className="flex-grow flex flex-col overflow-hidden">
+       <div className="flex-1 flex flex-col overflow-hidden">
         <DataTable columns={config.columns} data={config.data} />
       </div>
     </div>
