@@ -65,6 +65,9 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         </Button>
       </div>
     ),
+    meta: {
+      sticky: true,
+    }
   };
 
   const statusColumn: ColumnDef<TData> = {
@@ -151,7 +154,6 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         title: "File Selected",
         description: `You have selected ${file.name}. Ready for upload.`,
       });
-      // Reset the file input value to allow selecting the same file again
       event.target.value = '';
     }
   };
@@ -187,13 +189,13 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         </div>
       </div>
       <div className="flex-grow overflow-hidden rounded-lg border">
-        <ScrollArea className="h-full">
-          <Table>
+        <ScrollArea className="h-full w-full">
+          <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className={header.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card shadow-sm' : ''}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -207,7 +209,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card' : ''}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
