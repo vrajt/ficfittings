@@ -1,7 +1,10 @@
+
+'use client';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Settings, Users, CheckCircle } from "lucide-react";
 import Link from 'next/link';
+import { useTabs } from "@/components/tabs/tab-provider";
 
 const kpiData = [
   { title: "Total Certificates", value: "1,254", icon: FileText, change: "+12.5%", color: "text-blue-500", bgColor: "bg-blue-100" },
@@ -11,8 +14,15 @@ const kpiData = [
 ];
 
 export default function DashboardPage() {
+  const { addTab } = useTabs();
+  
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, title: string) => {
+    e.preventDefault();
+    addTab({ id: href, title, path: href });
+  };
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 p-4 md:p-6 lg:p-8">
       <PageHeader
         title="Welcome, Admin!"
         description="Here's a snapshot of your certification activities."
@@ -51,9 +61,9 @@ export default function DashboardPage() {
             <CardTitle>Quick Links</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2">
-             <Link href="/masters/customers" className="text-primary hover:underline">Manage Customers</Link>
-             <Link href="/masters/grades" className="text-primary hover:underline">Manage Grades</Link>
-             <Link href="/certificates" className="text-primary hover:underline">View All Certificates</Link>
+             <a href="/masters/customers" onClick={(e) => handleLinkClick(e, '/masters/customers', 'Manage Customers')} className="text-primary hover:underline">Manage Customers</a>
+             <a href="/masters/grades" onClick={(e) => handleLinkClick(e, '/masters/grades', 'Manage Grades')} className="text-primary hover:underline">Manage Grades</a>
+             <a href="/certificates" onClick={(e) => handleLinkClick(e, '/certificates', 'View All Certificates')} className="text-primary hover:underline">View All Certificates</a>
           </CardContent>
         </Card>
       </div>

@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText } from 'lucide-react';
+import { FileText, ChevronDown } from 'lucide-react';
 import { cva } from 'class-variance-authority';
 import {
   SidebarHeader,
@@ -21,9 +22,11 @@ import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
+import { useTabs } from './tabs/tab-provider';
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { addTab } = useTabs();
 
   const getDefaultAccordionValue = () => {
     for (const item of navConfig) {
@@ -35,7 +38,7 @@ export default function AppSidebar() {
       }
     }
     return undefined;
-  }
+  };
 
   const renderNavItem = (item: NavItem) => {
     const isActive = item.href ? pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}`)) : false;
@@ -48,10 +51,10 @@ export default function AppSidebar() {
               sidebarMenuButtonVariants(),
               "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
               )}>
-                    <div className='flex items-center gap-2'>
-                        <item.icon />
-                        <span>{item.title}</span>
-                    </div>
+              <div className='flex items-center gap-2'>
+                <item.icon />
+                <span>{item.title}</span>
+              </div>
             </AccordionTrigger>
             <AccordionContent className="p-0 pl-4">
               <SidebarMenu>
@@ -67,14 +70,19 @@ export default function AppSidebar() {
         return null;
     }
 
+    const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      addTab({ id: item.href, title: item.title, path: item.href });
+    };
+
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} passHref>
-          <SidebarMenuButton as="a" isActive={isActive}>
+        <a href={item.href} onClick={handleLinkClick} className="w-full block">
+          <SidebarMenuButton as="div" isActive={isActive}>
             <item.icon />
             <span>{item.title}</span>
           </SidebarMenuButton>
-        </Link>
+        </a>
       </SidebarMenuItem>
     );
   };

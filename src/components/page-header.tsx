@@ -1,6 +1,9 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import Link from 'next/link';
+import { useTabs } from "./tabs/tab-provider";
 
 interface PageHeaderProps {
   title: string;
@@ -10,6 +13,15 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, description, actionButtonText, actionButtonLink }: PageHeaderProps) {
+  const { addTab } = useTabs();
+
+  const handleActionClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (actionButtonLink && actionButtonText) {
+      addTab({ id: actionButtonLink, title: actionButtonText, path: actionButtonLink });
+    }
+  };
+
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="grid gap-1">
@@ -17,12 +29,12 @@ export function PageHeader({ title, description, actionButtonText, actionButtonL
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       {actionButtonText && actionButtonLink && (
-        <Link href={actionButtonLink} passHref>
+        <a href={actionButtonLink} onClick={handleActionClick}>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             {actionButtonText}
           </Button>
-        </Link>
+        </a>
       )}
     </div>
   );
