@@ -25,8 +25,8 @@ export function PageHeader({ title, description, actionButtonText, actionButtonL
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="grid gap-1">
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-        {description && <p className="text-muted-foreground">{description}</p>}
+        <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground">{title}</h1>
+        {description && <p className="text-muted-foreground text-sm">{description}</p>}
       </div>
       {actionButtonText && actionButtonLink && (
         <a href={actionButtonLink} onClick={handleActionClick}>
