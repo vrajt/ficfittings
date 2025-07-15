@@ -5,7 +5,7 @@ import type { Certificate } from './types';
 
 // Extend jsPDF with autoTable
 interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => jsPDF;
+  autoTable: (options: any) => jsPDFWithAutoTable;
 }
 
 export const generateCertificatePDF = (certificate: Certificate) => {
@@ -30,10 +30,6 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       { i: 'N/A', ii: 'N/A', iii: 'N/A', avg: 'N/A', temp: 'N/A' },
   ];
   
-  const heatTestData = [
-      { param: 'Heat Treatment', value: 'Normalizing' },
-  ];
-
   // --- PDF Generation ---
   
   // Header
@@ -79,7 +75,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
 
   // --- Two Column Layout Start ---
   
-  // Chemical Composition
+  // Left Column
   doc.autoTable({
     head: [['Chemical Composition']],
     startY: tableStartY,
@@ -98,7 +94,6 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   });
   const leftCol1Y = (doc as any).lastAutoTable.finalY;
 
-  // Physical Properties
   doc.autoTable({
     head: [['Physical Properties']],
     startY: leftCol1Y + 3,
@@ -117,7 +112,6 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   });
   const leftCol2Y = (doc as any).lastAutoTable.finalY;
 
-   // Other Test Details
   doc.autoTable({
     head: [['Other Test Details:']],
     body: [
@@ -130,8 +124,10 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     headStyles: { fillColor: false, textColor: 20 },
     margin: { right: 107 }
   });
+  const leftColFinalY = (doc as any).lastAutoTable.finalY;
 
-  // Charpy Impact Test
+
+  // Right Column
   doc.autoTable({
     head: [['Charpy Impact Test (Joules)']],
     startY: tableStartY,
@@ -150,7 +146,6 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   });
   const rightCol1Y = (doc as any).lastAutoTable.finalY;
 
-  // Laboratory Details
   doc.autoTable({
     head: [['Laboratory Details']],
     startY: rightCol1Y + 3,
@@ -160,18 +155,16 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   });
   doc.autoTable({
     body: [
-      [{content: 'Report No:', styles: {fontStyle: 'bold'}}, 'A/3304'],
-      [{content: 'Report Date:', styles: {fontStyle: 'bold'}}, '11/06/2025'],
-      [{content: 'Laboratory Name:', styles: {fontStyle: 'bold'}}, 'Industrial Metal Test Lab P.L.'],
+      ['Report No: A/3304', 'Report Date: 11/06/2025'],
+      [{content: 'Laboratory Name: Industrial Metal Test Lab P.L.', colSpan: 2, styles: {fontStyle: 'normal'}}],
     ],
     startY: (doc as any).lastAutoTable.finalY,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 1 },
+    styles: { fontSize: 8, cellPadding: 1, fontStyle: 'bold' },
     margin: { left: 107 }
   });
   const rightCol2Y = (doc as any).lastAutoTable.finalY;
 
-  // Heat Test Details
    doc.autoTable({
     head: [['Heat Test Details']],
     startY: rightCol2Y + 3,
@@ -186,11 +179,12 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     styles: { fontSize: 8, cellPadding: 1, minCellHeight: 20 },
     margin: { left: 107 }
   });
+  const rightColFinalY = (doc as any).lastAutoTable.finalY;
   
   // --- Two Column Layout End ---
 
   // Remarks
-  const finalY = Math.max((doc as any).lastAutoTable.finalY, leftCol2Y);
+  const finalY = Math.max(leftColFinalY, rightColFinalY);
   doc.autoTable({
       head: [['Remarks:']],
       body: [
