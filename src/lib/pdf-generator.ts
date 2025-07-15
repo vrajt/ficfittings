@@ -35,7 +35,6 @@ export const generateCertificatePDF = (certificate: Certificate) => {
 
   // --- PDF Generation ---
   const page_width = doc.internal.pageSize.getWidth();
-  const page_height = doc.internal.pageSize.getHeight();
   const margin = 10;
 
   // Header
@@ -74,6 +73,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     },
     didParseCell: (data) => {
         data.cell.styles.lineWidth = 0.1;
+        data.cell.styles.fillColor = false;
     }
   });
 
@@ -84,7 +84,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     startY: (doc as any).lastAutoTable.finalY,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 1, halign: 'center', valign: 'middle', minCellHeight: 6, lineWidth: 0.1 },
-    headStyles: { fontStyle: 'bold' },
+    headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
     columnStyles: { 2: { cellWidth: 60, halign: 'left' }, 3: {cellWidth: 35}, 4: {cellWidth: 35} },
   });
 
@@ -97,7 +97,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: bottomTableY,
       theme: 'grid',
       styles: { fontSize: 9, fontStyle: 'bold', halign: 'center' },
-      headStyles: { minCellHeight: 7 },
+      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
       didParseCell: (data) => { data.cell.styles.lineWidth = 0.1; }
   });
   doc.autoTable({
@@ -106,7 +106,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: (doc as any).lastAutoTable.finalY,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 1, halign: 'center', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold' },
+      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
   });
   const chemicalTableY = (doc as any).lastAutoTable.finalY;
 
@@ -117,7 +117,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: chemicalTableY + 2,
       theme: 'grid',
       styles: { fontSize: 9, fontStyle: 'bold', halign: 'center' },
-      headStyles: { minCellHeight: 7 },
+      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
       didParseCell: (data) => { data.cell.styles.lineWidth = 0.1; }
   });
   doc.autoTable({
@@ -126,7 +126,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: (doc as any).lastAutoTable.finalY,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 1, halign: 'center', valign: 'middle', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold' },
+      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
       columnStyles: { 5: { cellWidth: 40 } }
   });
   
@@ -142,10 +142,10 @@ export const generateCertificatePDF = (certificate: Certificate) => {
           [{content: 'Report No.', styles: {fontStyle: 'bold'}}, 'A/3304', {content: 'Report Date', styles: {fontStyle: 'bold'}}, '11/06/2025'],
           [{content: 'Laboratory Name', styles: {fontStyle: 'bold', halign: 'left'}}, {content: 'Industrial Metal Test Lab P.L.', colSpan: 3, styles: {halign: 'left'}}]
       ],
-      startY: bottomTableY + 9, // Align with chemical data table body
+      startY: bottomTableY, 
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 1, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold', halign: 'center' },
+      headStyles: { fontStyle: 'bold', halign: 'center', fillColor: false, textColor: 0 },
       margin: { left: rightColX },
       tableWidth: page_width - rightColX - margin,
   });
@@ -157,7 +157,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: (doc as any).lastAutoTable.finalY + 2,
       theme: 'grid',
       styles: { fontSize: 9, fontStyle: 'bold', halign: 'center', lineWidth: 0.1 },
-      headStyles: { minCellHeight: 7 },
+      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
       margin: { left: rightColX },
       tableWidth: page_width - rightColX - margin,
   });
@@ -167,7 +167,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: (doc as any).lastAutoTable.finalY,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 1, halign: 'center', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold' },
+      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
       margin: { left: rightColX },
       tableWidth: page_width - rightColX - margin,
   });
@@ -179,6 +179,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
       startY: (doc as any).lastAutoTable.finalY + 2,
       theme: 'grid',
       styles: { fontSize: 9, fontStyle: 'bold', halign: 'center', minCellHeight: 10, lineWidth: 0.1 },
+      headStyles: {fillColor: false, textColor: 0},
       margin: { left: rightColX },
       tableWidth: page_width - rightColX - margin,
   });
@@ -209,17 +210,18 @@ export const generateCertificatePDF = (certificate: Certificate) => {
 
 
   // Footer
+  const finalY = (doc as any).lastAutoTable.finalY;
   doc.setFontSize(9).setFont('helvetica', 'bold');
-  doc.text('For FORGED INDUSTRIAL CORPORATION', page_width - 75, page_height - 35);
-  doc.text('SURVEYOR', margin + 15, page_height - 25);
-  doc.text('Auth. Signatory', page_width - margin - 15, page_height - 25, { align: 'right' });
+  doc.text('For FORGED INDUSTRIAL CORPORATION', page_width - 75, finalY + 15);
+  doc.text('SURVEYOR', margin + 15, finalY + 25);
+  doc.text('Auth. Signatory', page_width - margin - 15, finalY + 25, { align: 'right' });
 
   doc.setFontSize(8).setFont('helvetica', 'normal');
   const footerText1 = `Regd. Office :- B.P.T. Plot No. 54, Gala No. 7, Ghoradeo 2 st Cross Lane, Mumbai - 400033. Tel.: 23725300 Website: www.ficfittings.com`;
   const footerText2 = `Factory :- Plot No. A-360, T.T.C. Industrial Area, M.I.D.C., Mahape, Dist. Thane, Navi Mumbai-400710. Tel: 27781861 | Email: nimcofittings@hotmail.com`;
   
-  doc.text(footerText1, page_width / 2, page_height - 15, { align: 'center' });
-  doc.text(footerText2, page_width / 2, page_height - 10, { align: 'center' });
+  doc.text(footerText1, page_width / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' });
+  doc.text(footerText2, page_width / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
 
   // Save the PDF
   doc.save(`Certificate-${certificate.certificateNumber}.pdf`);
