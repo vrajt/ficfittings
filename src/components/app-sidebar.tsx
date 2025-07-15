@@ -3,7 +3,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, ChevronDown } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { cva } from 'class-variance-authority';
 import {
   SidebarHeader,
   SidebarContent,
