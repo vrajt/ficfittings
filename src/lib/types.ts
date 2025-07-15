@@ -21,24 +21,29 @@ export type NavItem = {
   children?: NavItem[];
 };
 
-export type GenericMaster = {
+interface BaseEntity {
   id: string;
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export type GenericMaster = BaseEntity & {
   name: string;
   description?: string;
   code?: string;
   status: 'Active' | 'Inactive';
 };
 
-export type Customer = {
-    id: string;
+export type Customer = BaseEntity & {
     name: string;
     address: string;
     contactPerson: string;
     status: 'Active' | 'Inactive';
 };
 
-export type Certificate = {
-  id: string;
+export type Certificate = BaseEntity & {
   certificateNumber: string;
   customerName: string;
   date: string;
