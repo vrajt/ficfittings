@@ -2,8 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { FileText, ChevronDown } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { FileText, LogOut } from 'lucide-react';
 import { cva } from 'class-variance-authority';
 import {
   SidebarHeader,
@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import {
   Accordion,
@@ -27,30 +28,38 @@ import { useTabs } from './tabs/tab-provider';
 export default function AppSidebar() {
   const pathname = usePathname();
   const { addTab } = useTabs();
+  const router = useRouter();
+  const [activeItem, setActiveItem] = React.useState(pathname);
+  const [defaultAccordionValue, setDefaultAccordionValue] = React.useState<string | undefined>();
 
-  const getDefaultAccordionValue = () => {
+  React.useEffect(() => {
+    setActiveItem(pathname);
     for (const item of navConfig) {
       if (item.children) {
         const isChildActive = item.children.some(child => child.href && pathname.startsWith(child.href));
         if (isChildActive) {
-          return item.title;
+          setDefaultAccordionValue(item.title);
+          return;
         }
       }
     }
-    return undefined;
+  }, [pathname]);
+
+  const handleLogout = () => {
+    router.push('/login');
   };
 
   const renderNavItem = (item: NavItem) => {
-    const isActive = item.href ? pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}`)) : false;
+    const isActive = item.href ? activeItem === item.href || (item.href !== '/dashboard' && activeItem.startsWith(`${item.href}`)) : false;
 
     if (item.children) {
       return (
-        <Accordion key={item.title} type="single" collapsible defaultValue={getDefaultAccordionValue()} className="w-full">
+        <Accordion key={item.title} type="single" collapsible defaultValue={defaultAccordionValue} className="w-full">
           <AccordionItem value={item.title} className="border-none">
             <AccordionTrigger className={cn(
               sidebarMenuButtonVariants(),
               "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
-              )}>
+            )}>
               <div className='flex items-center gap-2'>
                 <item.icon />
                 <span>{item.title}</span>
@@ -67,12 +76,12 @@ export default function AppSidebar() {
     }
 
     if (!item.href) {
-        return null;
+      return null;
     }
 
     const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      addTab({ id: item.href, title: item.title, path: item.href });
+      addTab({ id: item.href as string, title: item.title, path: item.href as string });
     };
 
     return (
@@ -100,6 +109,16 @@ export default function AppSidebar() {
           {navConfig.map(renderNavItem)}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+         <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout}>
+                    <LogOut />
+                    <span>Logout</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+         </SidebarMenu>
+      </SidebarFooter>
     </>
   );
 }

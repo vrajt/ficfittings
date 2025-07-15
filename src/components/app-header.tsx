@@ -18,13 +18,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Search, Command } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
 import { useTabs } from './tabs/tab-provider';
-import { cn } from '@/lib/utils';
+import { Command } from "cmdk";
+
 
 export default function AppHeader() {
   const router = useRouter();
@@ -114,7 +115,7 @@ export default function AppHeader() {
           </Command>
         </PopoverContent>
       </Popover>
-      <div className="flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-full">
           <Bell className="h-5 w-5" />
           <span className="sr-only">Toggle notifications</span>
