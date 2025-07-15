@@ -31,7 +31,6 @@ export default function AppHeader() {
   const router = useRouter();
   const { addTab } = useTabs();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [filteredNavItems, setFilteredNavItems] = React.useState<NavItem[]>([]);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
 
   const handleLogout = () => {
@@ -51,19 +50,23 @@ export default function AppHeader() {
     return flatList;
   };
 
+  const allNavItems = React.useMemo(() => flattenNavItems(navConfig), []);
+
+  const filteredNavItems = React.useMemo(() => {
+    if (!searchQuery) return [];
+    return allNavItems.filter(item =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, allNavItems]);
+
+
   React.useEffect(() => {
     if (searchQuery) {
-      const allNavItems = flattenNavItems(navConfig);
-      const filtered = allNavItems.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredNavItems(filtered);
-      setIsSearchOpen(true);
+        if(!isSearchOpen) setIsSearchOpen(true);
     } else {
-      setFilteredNavItems([]);
-      setIsSearchOpen(false);
+        if(isSearchOpen) setIsSearchOpen(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, isSearchOpen]);
 
   const handleSearchItemClick = (item: NavItem) => {
     if (item.href) {
@@ -71,6 +74,10 @@ export default function AppHeader() {
     }
     setSearchQuery('');
     setIsSearchOpen(false);
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -87,7 +94,7 @@ export default function AppHeader() {
               placeholder="Search menus..."
               className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
         </PopoverTrigger>
