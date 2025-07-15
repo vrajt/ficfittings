@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { FileText, LogOut } from 'lucide-react';
 import { cva } from 'class-variance-authority';
 import {
@@ -24,11 +24,12 @@ import type { NavItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 import { useTabs } from './tabs/tab-provider';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const { addTab } = useTabs();
-  const router = useRouter();
+  const { logout } = useAuth();
   const [activeItem, setActiveItem] = React.useState(pathname);
   const [defaultAccordionValue, setDefaultAccordionValue] = React.useState<string | undefined>();
 
@@ -45,9 +46,6 @@ export default function AppSidebar() {
     }
   }, [pathname]);
 
-  const handleLogout = () => {
-    router.push('/login');
-  };
 
   const renderNavItem = (item: NavItem) => {
     const isActive = item.href ? activeItem === item.href || (item.href !== '/dashboard' && activeItem.startsWith(`${item.href}`)) : false;
@@ -112,7 +110,7 @@ export default function AppSidebar() {
       <SidebarFooter>
          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout}>
+                <SidebarMenuButton onClick={logout}>
                     <LogOut />
                     <span>Logout</span>
                 </SidebarMenuButton>

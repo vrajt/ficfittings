@@ -25,17 +25,15 @@ import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
 import { useTabs } from './tabs/tab-provider';
 import { Command } from "cmdk";
+import { useAuth } from '@/contexts/auth-context';
 
 
 export default function AppHeader() {
   const router = useRouter();
   const { addTab } = useTabs();
+  const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
-
-  const handleLogout = () => {
-    router.push('/login');
-  };
 
   const flattenNavItems = (items: NavItem[]): NavItem[] => {
     const flatList: NavItem[] = [];
@@ -137,7 +135,7 @@ export default function AppHeader() {
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
