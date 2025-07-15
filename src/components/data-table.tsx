@@ -158,7 +158,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -187,8 +187,8 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             </Button>
         </div>
       </div>
-      <div className="flex-1 rounded-lg border overflow-hidden">
-        <ScrollArea className="h-full w-full">
+      <div className="rounded-lg border">
+        <ScrollArea className="h-[60vh] w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (

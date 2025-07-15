@@ -6,16 +6,14 @@ import { certificateConfig } from '@/lib/master-data-config';
 
 export default function CertificatesPage() {
   return (
-    <div className="flex flex-col h-full space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
         title={certificateConfig.title}
         description={certificateConfig.description}
         actionButtonText="New Certificate"
         actionButtonLink="/certificates/new"
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DataTable columns={certificateConfig.columns} data={certificateConfig.data} />
-      </div>
+      <DataTable columns={certificateConfig.columns} data={certificateConfig.data} />
     </div>
   );
 }
