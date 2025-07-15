@@ -26,7 +26,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Pencil, Trash2, Search, FileDown, Upload } from 'lucide-react';
-import { Card } from './ui/card';
 import {
   Select,
   SelectContent,
@@ -188,7 +187,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             </Button>
         </div>
       </div>
-      <div className="flex-grow overflow-hidden rounded-lg border">
+      <div className="flex-grow rounded-lg border overflow-hidden">
         <ScrollArea className="h-full w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
@@ -227,7 +226,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
-      <div className="flex items-center justify-between py-4">
+      <div className="flex items-center justify-between">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} record(s).
         </div>
