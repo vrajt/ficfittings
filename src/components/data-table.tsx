@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 
 interface DataTableProps<TData, TValue> {
@@ -177,17 +178,17 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 className="hidden"
                 accept=".xlsx, .xls, .csv"
             />
-            <Button onClick={handleUploadClick} variant="outline" className="w-full">
+            <Button onClick={handleUploadClick} variant="outline" className="w-full sm:w-auto">
                 <Upload className="mr-2 h-4 w-4" />
                 Bulk Upload
             </Button>
-            <Button onClick={handleExport} variant="outline" className="w-full">
+            <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
                 <FileDown className="mr-2 h-4 w-4" />
                 Export
             </Button>
         </div>
       </div>
-      <div className="rounded-lg border flex-1 overflow-hidden">
+      <div className="rounded-lg border flex-1 overflow-hidden h-[500px]">
         <ScrollArea className="h-full w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
@@ -251,7 +252,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex w-full sm:w-[100px] items-center justify-center text-sm font-medium">
+            <div className="flex w-full sm:w-auto items-center justify-center text-sm font-medium">
                 Page {table.getState().pagination.pageIndex + 1} of{' '}
                 {table.getPageCount()}
             </div>
@@ -280,5 +281,3 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     </div>
   );
 }
-
-    
