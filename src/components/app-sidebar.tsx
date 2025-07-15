@@ -32,11 +32,13 @@ export default function AppSidebar() {
         const isChildActive = item.children.some(child => child.href && pathname.startsWith(child.href));
         if (isChildActive) {
           setActiveAccordionItem(item.title);
-          break;
+          return; // Exit after finding the active group
         }
       }
     }
+    setActiveAccordionItem(undefined); // Collapse if no child is active
   }, [pathname]);
+
 
   const renderNavItem = (item: NavItem) => {
     const isActive = item.href ? pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}`)) : false;
