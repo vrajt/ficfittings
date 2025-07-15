@@ -121,10 +121,14 @@ export function TabBar() {
         <div
           key={tab.id}
           onClick={() => handleSetActiveTab(tab.id)}
+          style={activeTab === tab.id ? { 
+            backgroundColor: 'hsl(var(--tab-active-background))', 
+            color: 'hsl(var(--tab-active-foreground))' 
+          } : {}}
           className={cn(
             'flex items-center gap-2 py-2 px-4 border-r cursor-pointer text-sm group',
             activeTab === tab.id 
-              ? 'bg-background text-primary font-semibold' 
+              ? 'font-semibold' 
               : 'text-muted-foreground hover:bg-background/50'
           )}
         >
