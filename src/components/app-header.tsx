@@ -15,7 +15,7 @@ import {
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverAnchor,
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Search } from "lucide-react";
@@ -71,11 +71,7 @@ export default function AppHeader() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query) {
-      setIsSearchOpen(true);
-    } else {
-      setIsSearchOpen(false);
-    }
+    setIsSearchOpen(!!query);
   };
 
   return (
@@ -84,18 +80,18 @@ export default function AppHeader() {
         <SidebarTrigger />
       </div>
       <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <PopoverTrigger asChild>
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search menus..."
-              className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+            <PopoverAnchor asChild>
+                <Input
+                type="search"
+                placeholder="Search menus..."
+                className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                />
+            </PopoverAnchor>
           </div>
-        </PopoverTrigger>
         <PopoverContent className="w-[320px] p-0" align="start">
           <Command>
             <div className="p-2">
