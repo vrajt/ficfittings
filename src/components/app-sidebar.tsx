@@ -56,7 +56,7 @@ export default function AppSidebar() {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} passHref>
+        <Link href={item.href} legacyBehavior passHref>
           <SidebarMenuButton as="a" isActive={isActive}>
             <item.icon />
             <span>{item.title}</span>
