@@ -14,7 +14,7 @@ import {
   Beaker,
   ChevronDown,
   Shapes,
-  MousePointerSquare,
+  MousePointerClick,
   Type,
   ToyBrick,
 } from 'lucide-react';
@@ -54,7 +54,7 @@ export const navConfig: NavItem[] = [
     icon: ToyBrick,
     children: [
         { title: 'Icons', href: '/icons', icon: Shapes },
-        { title: 'Buttons', href: '/components/buttons', icon: MousePointerSquare },
+        { title: 'Buttons', href: '/components/buttons', icon: MousePointerClick },
         { title: 'Inputs', href: '/components/inputs', icon: Type },
     ]
   }
