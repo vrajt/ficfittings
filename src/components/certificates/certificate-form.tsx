@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -30,10 +31,10 @@ import {
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { customerData } from "@/lib/placeholder-data";
-import { FileDown, PlusCircle, Trash2 } from "lucide-react";
-import { DataTable } from "../data-table";
+import { FileDown, Loader2, PlusCircle } from "lucide-react";
+import { useTabs } from "../tabs/tab-provider";
 
 const formSchema = z.object({
   docNo: z.string().min(1, "Document number is required"),
@@ -45,18 +46,12 @@ const formSchema = z.object({
   remarks: z.string().optional(),
 });
 
-const heatTestColumns = [
-    { accessorKey: 'testName', header: 'Test Name' },
-    { accessorKey: 'value', header: 'Value' },
-    { accessorKey: 'unit', header: 'Unit' },
-];
-const otherTestColumns = [
-    { accessorKey: 'testName', header: 'Test Name' },
-    { accessorKey: 'result', header: 'Result' },
-];
-
 export function CertificateForm() {
   const router = useRouter();
+  const pathname = usePathname();
+  const { removeTab } = useTabs();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -84,12 +79,19 @@ export function CertificateForm() {
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     console.log(values);
-    toast({
-      title: "Certificate Saved",
-      description: "The test certificate has been saved successfully.",
-    });
-    router.push("/certificates");
+    
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: "Certificate Saved",
+        description: "The test certificate has been saved successfully.",
+      });
+      setIsSubmitting(false);
+      removeTab(pathname);
+      router.push("/certificates");
+    }, 1500);
   }
   
   return (
@@ -105,7 +107,16 @@ export function CertificateForm() {
               <TabsTrigger value="remarks">Remarks</TabsTrigger>
             </TabsList>
             <div className="ml-auto flex items-center gap-2">
-                <Button type="submit" variant="default">Save Certificate</Button>
+                <Button type="submit" variant="default" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Certificate"
+                  )}
+                </Button>
                 <Button type="button" variant="outline">
                     <FileDown className="mr-2 h-4 w-4" />
                     Export PDF

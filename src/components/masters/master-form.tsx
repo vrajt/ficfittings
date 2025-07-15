@@ -25,8 +25,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { masterDataConfig } from "@/lib/master-data-config";
+import { Loader2 } from "lucide-react";
+import { useTabs } from "../tabs/tab-provider";
 
 interface MasterFormProps {
     masterType: string;
@@ -58,6 +60,10 @@ const createFormSchema = (masterType: string) => {
 
 export function MasterForm({ masterType }: MasterFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { removeTab } = useTabs();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const config = masterDataConfig[masterType as keyof typeof masterDataConfig];
   
   const formSchema = createFormSchema(masterType);
@@ -71,12 +77,19 @@ export function MasterForm({ masterType }: MasterFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     console.log(values);
-    toast({
-      title: "Master Saved",
-      description: `The new ${config.title.replace(' Master', '').toLowerCase()} has been saved successfully.`,
-    });
-    router.push(`/masters/${masterType}`);
+
+    // Simulate API call
+    setTimeout(() => {
+        toast({
+            title: "Master Saved",
+            description: `The new ${config.title.replace(' Master', '').toLowerCase()} has been saved successfully.`,
+        });
+        setIsSubmitting(false);
+        removeTab(pathname);
+        router.push(`/masters/${masterType}`);
+    }, 1500); // 1.5 second delay
   }
   
   return (
@@ -128,7 +141,16 @@ export function MasterForm({ masterType }: MasterFormProps) {
                 )}/>
             </CardContent>
             <CardFooter className="justify-end">
-                <Button type="submit">Save</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                   {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        "Save"
+                    )}
+                </Button>
             </CardFooter>
         </Card>
       </form>
