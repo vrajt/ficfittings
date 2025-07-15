@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -31,14 +32,14 @@ export default function AppSidebar() {
       return (
         <Accordion key={item.title} type="single" collapsible defaultValue={isChildActive ? item.title : undefined} className="w-full">
           <AccordionItem value={item.title} className="border-none">
-            <AccordionTrigger asChild>
-               <SidebarMenuButton className="justify-between [&>svg:last-child]:data-[state=open]:rotate-180">
+            <AccordionTrigger className={cn(
+              sidebarMenuButtonVariants(),
+              "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
+              )}>
                     <div className='flex items-center gap-2'>
                         <item.icon />
                         <span>{item.title}</span>
                     </div>
-                    <ChevronDown className="transition-transform duration-200" />
-                </SidebarMenuButton>
             </AccordionTrigger>
             <AccordionContent className="p-0 pl-4">
               <SidebarMenu>
@@ -56,7 +57,7 @@ export default function AppSidebar() {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} legacyBehavior passHref>
+        <Link href={item.href} passHref>
           <SidebarMenuButton as="a" isActive={isActive}>
             <item.icon />
             <span>{item.title}</span>
@@ -82,3 +83,7 @@ export default function AppSidebar() {
     </>
   );
 }
+
+const sidebarMenuButtonVariants = cva(
+  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0"
+);
