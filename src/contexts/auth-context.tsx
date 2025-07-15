@@ -14,45 +14,24 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Start with isAuthenticated: false and isLoading: true.
-  // This ensures the server and client initial renders match.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start as true to prevent flash of unstyled content
   const router = useRouter();
 
   useEffect(() => {
-    // This effect runs only on the client, after the component has mounted.
-    try {
-        const loggedIn = localStorage.getItem('isAuthenticated') === 'true';
-        setIsAuthenticated(loggedIn);
-    } catch (error) {
-        console.error("Could not access localStorage", error);
-        // Ensure we stay in a non-authenticated state if localStorage fails
-        setIsAuthenticated(false);
-    } finally {
-        // Once we've checked localStorage, we're no longer loading.
-        setIsLoading(false);
-    }
+    // Since we are not persisting auth, we can just set loading to false.
+    // The initial state of isAuthenticated is already false.
+    setIsLoading(false);
   }, []);
 
   const login = () => {
-    try {
-        localStorage.setItem('isAuthenticated', 'true');
-        setIsAuthenticated(true);
-        router.push('/dashboard');
-    } catch (error) {
-        console.error("Could not access localStorage", error);
-    }
+    setIsAuthenticated(true);
+    router.push('/dashboard');
   };
 
   const logout = () => {
-    try {
-        localStorage.removeItem('isAuthenticated');
-        setIsAuthenticated(false);
-        router.push('/login');
-    } catch (error) {
-        console.error("Could not access localStorage", error);
-    }
+    setIsAuthenticated(false);
+    router.push('/login');
   };
 
   return (
