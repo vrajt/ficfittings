@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -59,8 +60,8 @@ export function CertificateForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      docNo: `TC-${new Date().getFullYear()}-`,
-      docDate: new Date().toISOString().split("T")[0],
+      docNo: "",
+      docDate: "",
       customerId: "",
       product: "",
       grade: "",
@@ -68,6 +69,19 @@ export function CertificateForm() {
       remarks: "",
     },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      docNo: `TC-${new Date().getFullYear()}-`,
+      docDate: new Date().toISOString().split("T")[0],
+      customerId: "",
+      product: "",
+      grade: "",
+      dimensions: "",
+      remarks: "",
+    });
+  }, [form]);
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
