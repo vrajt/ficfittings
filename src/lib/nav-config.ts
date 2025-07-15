@@ -12,7 +12,11 @@ import {
   MessageSquareText,
   Component,
   Beaker,
-  ChevronDown
+  ChevronDown,
+  Shapes,
+  MousePointerSquare,
+  Type,
+  Brick,
 } from 'lucide-react';
 import type { NavItem } from './types';
 
@@ -44,4 +48,14 @@ export const navConfig: NavItem[] = [
       { title: 'Other Tests', href: '/masters/other-tests', icon: Beaker, masterType: 'other-tests' },
     ],
   },
+  {
+    title: 'UI Kit',
+    href: '#',
+    icon: Brick,
+    children: [
+        { title: 'Icons', href: '/icons', icon: Shapes },
+        { title: 'Buttons', href: '/components/buttons', icon: MousePointerSquare },
+        { title: 'Inputs', href: '/components/inputs', icon: Type },
+    ]
+  }
 ];
