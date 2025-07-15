@@ -14,13 +14,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Start with isAuthenticated: false to ensure server and client initial render match.
+  // Start with isAuthenticated: false and isLoading: true.
+  // This ensures the server and client initial renders match.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Only check localStorage on the client-side after the component has mounted.
+    // This effect runs only on the client, after the component has mounted.
     try {
         const loggedIn = localStorage.getItem('isAuthenticated') === 'true';
         setIsAuthenticated(loggedIn);
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ensure we stay in a non-authenticated state if localStorage fails
         setIsAuthenticated(false);
     } finally {
+        // Once we've checked localStorage, we're no longer loading.
         setIsLoading(false);
     }
   }, []);
