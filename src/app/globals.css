@@ -34,9 +34,9 @@ body {
     --chart-5: 27 87% 67%;
 
     /* Custom Colors */
-    --header-background: 0 0% 100%;
-    --tab-bar-background: 220 14.3% 97.5%;
-    --tab-active-background: 0 0% 100%;
+    --header-background: 220 14.3% 97.5%;
+    --tab-bar-background: 0 0% 100%;
+    --tab-active-background: 210 20% 98%;
     --tab-active-foreground: 221.2 83.2% 53.3%;
 
     /* Sidebar Colors - Light Theme */
@@ -77,9 +77,9 @@ body {
     --chart-5: 340 75% 55%;
 
     /* Custom Colors */
-    --header-background: 217 33% 17%;
-    --tab-bar-background: 222 47% 11%;
-    --tab-active-background: 217 33% 22%;
+    --header-background: 222 47% 11%;
+    --tab-bar-background: 217 33% 17%;
+    --tab-active-background: 222 47% 11%;
     --tab-active-foreground: 210 40% 98%;
 
     /* Sidebar Colors - Dark Theme */
@@ -100,5 +100,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    overflow-y: scroll;
   }
 }
