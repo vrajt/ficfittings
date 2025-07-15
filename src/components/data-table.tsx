@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Pencil, Trash2, Search, FileDown } from 'lucide-react';
+import { Pencil, Trash2, Search, FileDown, Upload } from 'lucide-react';
 import { Card } from './ui/card';
 import {
   Select,
@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from '@/hooks/use-toast';
 
 
 interface DataTableProps<TData, TValue> {
@@ -47,6 +48,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const actionColumn: ColumnDef<TData> = {
     id: 'actions',
@@ -137,6 +139,23 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     XLSX.writeFile(workbook, 'data-export.xlsx');
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log('Selected file:', file);
+      toast({
+        title: "File Selected",
+        description: `You have selected ${file.name}. Ready for upload.`,
+      });
+      // Reset the file input value to allow selecting the same file again
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between">
@@ -149,10 +168,23 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             className="max-w-sm pl-9"
           />
         </div>
-        <Button onClick={handleExport} variant="outline">
-          <FileDown className="mr-2 h-4 w-4" />
-          Export to Excel
-        </Button>
+        <div className="flex items-center gap-2">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".xlsx, .xls, .csv"
+            />
+            <Button onClick={handleUploadClick} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Bulk Upload
+            </Button>
+            <Button onClick={handleExport} variant="outline">
+                <FileDown className="mr-2 h-4 w-4" />
+                Export to Excel
+            </Button>
+        </div>
       </div>
       <div className="flex-grow overflow-hidden rounded-lg border">
         <ScrollArea className="h-full">
