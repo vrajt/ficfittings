@@ -83,12 +83,12 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         case 'Active':
         case 'Issued':
             badgeVariant = 'default';
-            badgeClass = 'bg-green-100 text-green-800';
+            badgeClass = 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
             break;
         case 'Inactive':
         case 'Draft':
             badgeVariant = 'secondary';
-            badgeClass = 'bg-yellow-100 text-yellow-800';
+            badgeClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
             break;
       }
 
@@ -159,7 +159,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -188,9 +188,9 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             </Button>
         </div>
       </div>
-      <div className="rounded-lg border">
+      <div className="rounded-lg border flex-1">
         <ScrollArea className="h-[500px] w-full">
-          <Table className="relative">
+          <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>

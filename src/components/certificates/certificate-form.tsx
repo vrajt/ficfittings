@@ -98,16 +98,16 @@ export function CertificateForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="document" className="w-full">
-          <div className="flex items-center">
-            <TabsList>
-              <TabsTrigger value="document">Document Details</TabsTrigger>
-              <TabsTrigger value="product">Product Details</TabsTrigger>
-              <TabsTrigger value="heat-test">Heat Test Details</TabsTrigger>
-              <TabsTrigger value="other-test">Other Test Details</TabsTrigger>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
+            <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto w-full sm:w-auto">
+              <TabsTrigger value="document">Document</TabsTrigger>
+              <TabsTrigger value="product">Product</TabsTrigger>
+              <TabsTrigger value="heat-test">Heat Test</TabsTrigger>
+              <TabsTrigger value="other-test">Other Test</TabsTrigger>
               <TabsTrigger value="remarks">Remarks</TabsTrigger>
             </TabsList>
-            <div className="ml-auto flex items-center gap-2">
-                <Button type="submit" variant="default" disabled={isSubmitting}>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -117,7 +117,7 @@ export function CertificateForm() {
                     "Save Certificate"
                   )}
                 </Button>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" className="w-full sm:w-auto">
                     <FileDown className="mr-2 h-4 w-4" />
                     Export PDF
                 </Button>

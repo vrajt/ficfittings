@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { useTabs } from "@/components/tabs/tab-provider";
 
 const kpiData = [
-  { title: "Total Certificates", value: "1,254", icon: FileText, change: "+12.5%", color: "text-blue-500", bgColor: "bg-blue-100" },
-  { title: "Masters Configured", value: "10", icon: Settings, change: "+2", color: "text-purple-500", bgColor: "bg-purple-100" },
-  { title: "Active Customers", value: "87", icon: Users, change: "-2.1%", color: "text-green-500", bgColor: "bg-green-100" },
-  { title: "Certificates Issued (Month)", value: "112", icon: CheckCircle, change: "+5.8%", color: "text-orange-500", bgColor: "bg-orange-100" },
+  { title: "Total Certificates", value: "1,254", icon: FileText, change: "+12.5%", color: "text-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/50" },
+  { title: "Masters Configured", value: "10", icon: Settings, change: "+2", color: "text-purple-500", bgColor: "bg-purple-100 dark:bg-purple-900/50" },
+  { title: "Active Customers", value: "87", icon: Users, change: "-2.1%", color: "text-green-500", bgColor: "bg-green-100 dark:bg-green-900/50" },
+  { title: "Certificates Issued (Month)", value: "112", icon: CheckCircle, change: "+5.8%", color: "text-orange-500", bgColor: "bg-orange-100 dark:bg-orange-900/50" },
 ];
 
 export default function DashboardPage() {
@@ -30,7 +30,7 @@ export default function DashboardPage() {
         actionButtonLink="/certificates/new"
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpiData.map((kpi) => (
           <Card key={kpi.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

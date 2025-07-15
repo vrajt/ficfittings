@@ -99,7 +99,7 @@ export function MasterForm({ masterType }: MasterFormProps) {
             <CardHeader>
                 <CardTitle>Master Details</CardTitle>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {config.columns.map(col => {
                     const key = col.accessorKey as string;
                     if (key === 'id' || key === 'status') return null;
