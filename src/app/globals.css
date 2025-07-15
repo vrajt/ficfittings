@@ -40,7 +40,7 @@ body {
     --tab-active-foreground: 221.2 83.2% 53.3%;
 
     /* Sidebar Colors - Light Theme */
-    --sidebar-background: 220 14.3% 98.5%;
+    --sidebar-background: 220 14.3% 95.9%;
     --sidebar-foreground: 224 71.4% 4.1%;
     --sidebar-primary: 221.2 83.2% 53.3%;
     --sidebar-primary-foreground: 210 20% 98%;
@@ -83,7 +83,7 @@ body {
     --tab-active-foreground: 210 40% 98%;
 
     /* Sidebar Colors - Dark Theme */
-    --sidebar-background: 222 47% 11%;
+    --sidebar-background: 222 47% 9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 210 40% 98%;
     --sidebar-primary-foreground: 222 47% 11%;
