@@ -27,7 +27,7 @@ export default function AppSidebar() {
     const isActive = item.href ? pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}`)) : false;
 
     if (item.children) {
-      const isChildActive = item.children.some(child => pathname.startsWith(child.href));
+      const isChildActive = item.children.some(child => child.href && pathname.startsWith(child.href));
       return (
         <Accordion key={item.title} type="single" collapsible defaultValue={isChildActive ? item.title : undefined} className="w-full">
           <AccordionItem value={item.title} className="border-none">
@@ -50,9 +50,13 @@ export default function AppSidebar() {
       );
     }
 
+    if (!item.href) {
+        return null;
+    }
+
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} passHref legacyBehavior>
+        <Link href={item.href} passHref>
           <SidebarMenuButton as="a" isActive={isActive}>
             <item.icon />
             <span>{item.title}</span>
