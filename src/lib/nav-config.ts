@@ -17,6 +17,7 @@ import {
   MousePointerClick,
   Type,
   ToyBrick,
+  AlertCircle,
 } from 'lucide-react';
 import type { NavItem } from './types';
 
@@ -55,6 +56,7 @@ export const navConfig: NavItem[] = [
     icon: ToyBrick,
     children: [
         { title: 'Icons', href: '/icons', icon: Shapes },
+        { title: 'Alerts', href: '/components/alerts', icon: AlertCircle, pageType: 'alerts' },
         { title: 'Buttons', href: '/components/buttons', icon: MousePointerClick },
         { title: 'Inputs', href: '/components/inputs', icon: Type },
     ]

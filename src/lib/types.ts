@@ -13,19 +13,22 @@ export type MasterType =
   | 'heat-tests'
   | 'other-tests';
 
+export type PageType = 'alerts';
+
 export type NavItem = {
   title: string;
   href: string;
   icon: LucideIcon;
   label?: string;
   masterType?: MasterType;
+  pageType?: PageType;
   children?: NavItem[];
 };
 
 interface BaseEntity {
   id: string;
   createdBy: string;
-  date: string; // Changed from createdAt
+  date: string;
   updatedBy: string;
   updatedAt: string;
 }

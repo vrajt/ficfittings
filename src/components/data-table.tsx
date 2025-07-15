@@ -10,6 +10,7 @@ import {
   getPaginationRowModel,
   useReactTable,
   ColumnFiltersState,
+  RowSelectionState,
 } from '@tanstack/react-table';
 import * as XLSX from 'xlsx';
 import type { DateRange } from "react-day-picker";
@@ -34,6 +35,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
@@ -41,6 +52,7 @@ import { DatePickerWithRange } from './ui/date-range-picker';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { generateCertificatePDF } from '@/lib/pdf-generator';
 import type { Certificate } from '@/lib/types';
+import { Checkbox } from './ui/checkbox';
 
 
 interface DataTableProps<TData, TValue> {
@@ -55,6 +67,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
@@ -62,6 +75,39 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const handleDownload = (rowData: TData) => {
     // Assuming rowData conforms to at least a partial Certificate type
     generateCertificatePDF(rowData as Certificate);
+  };
+  
+  const handleDeleteSelected = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    toast({
+        title: "Deletion confirmed",
+        description: `${selectedRows.length} record(s) have been marked for deletion.`,
+    });
+    console.log("Deleting rows:", selectedRows.map(r => r.original.id));
+    table.resetRowSelection();
+  };
+
+  const selectionColumn: ColumnDef<TData> = {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
   };
 
   const actionColumn: ColumnDef<TData> = {
@@ -141,7 +187,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     },
   };
   
-  const columns = React.useMemo(() => [...propColumns, statusColumn, actionColumn], [propColumns]);
+  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns]);
 
   const table = useReactTable({
     data,
@@ -150,6 +196,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     filterFns: {
         dateRange: (row, columnId, value) => {
           const date = new Date(row.getValue(columnId));
@@ -164,6 +211,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     state: {
       columnFilters,
       globalFilter,
+      rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
     initialState: {
@@ -273,6 +321,29 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                     onDateChange={setDateRange}
                 />
             )}
+             {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full sm:w-auto">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete ({table.getFilteredSelectedRowModel().rows.length})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the selected
+                                {table.getFilteredSelectedRowModel().rows.length} record(s).
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSelected}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
             <input
@@ -347,7 +418,8 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} record(s).
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
             <div className="flex items-center space-x-2 w-full sm:w-auto">
