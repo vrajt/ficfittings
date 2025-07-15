@@ -16,7 +16,7 @@ import {
   Shapes,
   MousePointerSquare,
   Type,
-  Brick,
+  ToyBrick,
 } from 'lucide-react';
 import type { NavItem } from './types';
 
@@ -51,7 +51,7 @@ export const navConfig: NavItem[] = [
   {
     title: 'UI Kit',
     href: '#',
-    icon: Brick,
+    icon: ToyBrick,
     children: [
         { title: 'Icons', href: '/icons', icon: Shapes },
         { title: 'Buttons', href: '/components/buttons', icon: MousePointerSquare },
