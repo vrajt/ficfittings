@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -21,17 +20,30 @@ import {
 import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import * as React from 'react';
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const [activeAccordionItem, setActiveAccordionItem] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    for (const item of navConfig) {
+      if (item.children) {
+        const isChildActive = item.children.some(child => child.href && pathname.startsWith(child.href));
+        if (isChildActive) {
+          setActiveAccordionItem(item.title);
+          break;
+        }
+      }
+    }
+  }, [pathname]);
 
   const renderNavItem = (item: NavItem) => {
     const isActive = item.href ? pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}`)) : false;
 
     if (item.children) {
-      const isChildActive = item.children.some(child => child.href && pathname.startsWith(child.href));
       return (
-        <Accordion key={item.title} type="single" collapsible defaultValue={isChildActive ? item.title : undefined} className="w-full">
+        <Accordion key={item.title} type="single" collapsible value={activeAccordionItem} onValueChange={setActiveAccordionItem} className="w-full">
           <AccordionItem value={item.title} className="border-none">
             <AccordionTrigger className={cn(
               sidebarMenuButtonVariants(),
@@ -58,8 +70,8 @@ export default function AppSidebar() {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} passHref>
-          <SidebarMenuButton as="a" isActive={isActive}>
+        <Link href={item.href}>
+          <SidebarMenuButton isActive={isActive}>
             <item.icon />
             <span>{item.title}</span>
           </SidebarMenuButton>
