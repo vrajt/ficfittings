@@ -31,7 +31,6 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   React.useEffect(() => {
-    // When the route changes, check if there is a tab for the new route
     const tabForPath = tabs.find(t => t.path === pathname);
     if (tabForPath) {
       if (activeTab !== tabForPath.id) {
@@ -70,11 +69,7 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
         router.push(newActiveTab.path);
       }
     } else if (tabs.length === 1) {
-        // If last tab is closed, we should decide where to navigate.
-        // For now, let's do nothing, user will have an empty content area.
         setActiveTab(null);
-        // Or navigate to a default page like dashboard
-        // router.push('/dashboard');
     }
   };
 
@@ -129,8 +124,8 @@ export function TabBar() {
           className={cn(
             'flex items-center gap-2 py-2 px-4 border-r cursor-pointer text-sm group',
             activeTab === tab.id 
-              ? 'bg-background text-primary font-semibold shadow-inner' 
-              : 'text-muted-foreground hover:bg-muted/80'
+              ? 'bg-background text-primary font-semibold' 
+              : 'text-muted-foreground hover:bg-background/50'
           )}
         >
           <span>{tab.title}</span>
@@ -138,10 +133,10 @@ export function TabBar() {
             variant="ghost"
             size="icon"
             className={cn(
-                'h-5 w-5 rounded-full',
+                'h-5 w-5 rounded-full opacity-50 group-hover:opacity-100',
                 activeTab === tab.id 
                   ? 'hover:bg-primary/20'
-                  : 'text-muted-foreground/50 hover:bg-muted-foreground/20'
+                  : 'hover:bg-muted-foreground/20'
               )}
             onClick={(e) => {
               e.stopPropagation();
