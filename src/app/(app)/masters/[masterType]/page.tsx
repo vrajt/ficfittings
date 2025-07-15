@@ -16,7 +16,7 @@ export default function MasterTypePage({ params }: { params: { masterType: strin
       <PageHeader
         title={config.title}
         description={config.description}
-        actionButtonText={`New ${config.title.replace(' Master', '')}`}
+        actionButtonText={`Add New ${config.title.replace(' Master', '')}`}
         actionButtonLink={`/masters/${masterType}/new`}
       />
       <DataTable columns={config.columns} data={config.data} />
