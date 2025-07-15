@@ -71,9 +71,9 @@ export default function AppHeader() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query && !isSearchOpen) {
+    if (query) {
       setIsSearchOpen(true);
-    } else if (!query && isSearchOpen) {
+    } else {
       setIsSearchOpen(false);
     }
   };
@@ -93,9 +93,6 @@ export default function AppHeader() {
               className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
               value={searchQuery}
               onChange={handleSearchChange}
-              onFocus={() => {
-                if(searchQuery) setIsSearchOpen(true)
-              }}
             />
           </div>
         </PopoverTrigger>
