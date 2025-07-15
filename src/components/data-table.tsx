@@ -35,16 +35,19 @@ import {
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Skeleton } from './ui/skeleton';
 
 
 interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
+  isLoading?: boolean;
 }
 
 export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft' }, TValue>({
   data,
   columns: propColumns,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -157,6 +160,31 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
       event.target.value = '';
     }
   };
+  
+  if (isLoading) {
+    return (
+        <div className="flex flex-1 flex-col gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                <Skeleton className="h-10 w-full sm:max-w-sm" />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Skeleton className="h-10 w-full sm:w-32" />
+                    <Skeleton className="h-10 w-full sm:w-24" />
+                </div>
+            </div>
+            <div className="rounded-lg border">
+                <Skeleton className="h-[500px] w-full" />
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <Skeleton className="h-5 w-24" />
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                    <Skeleton className="h-8 w-full sm:w-32" />
+                    <Skeleton className="h-8 w-full sm:w-32" />
+                    <Skeleton className="h-8 w-full sm:w-32" />
+                </div>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4">
