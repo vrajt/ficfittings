@@ -36,6 +36,20 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   // --- PDF Generation ---
   const page_width = doc.internal.pageSize.getWidth();
   const margin = 10;
+  const tableStyles = {
+    fontSize: 8,
+    cellPadding: 1,
+    lineWidth: 0.1,
+    lineColor: 0,
+    fillColor: false,
+    textColor: 0,
+  };
+  const headStyles = {
+    fontStyle: 'bold',
+    fillColor: false,
+    textColor: 0,
+    lineColor: 0,
+  };
 
   // Header
   doc.setFontSize(18).setFont('helvetica', 'bold');
@@ -54,7 +68,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   doc.autoTable({
     startY: margin + 28,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 1, fontStyle: 'normal' },
+    styles: { ...tableStyles, cellPadding: 1, fontStyle: 'normal' },
     body: [
       [
         { content: 'Customer Name', styles: { fontStyle: 'bold' } }, { content: 'Airoil Flaregas Pvt.Ltd.' },
@@ -73,6 +87,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     },
     didParseCell: (data) => {
         data.cell.styles.lineWidth = 0.1;
+        data.cell.styles.lineColor = 0;
         data.cell.styles.fillColor = false;
     }
   });
@@ -83,117 +98,58 @@ export const generateCertificatePDF = (certificate: Certificate) => {
     body: itemDescriptionData.map(i => [i.sr, i.poSr, i.desc, i.spec, i.dim, i.size, i.lot, i.qty, i.uom]),
     startY: (doc as any).lastAutoTable.finalY,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 1, halign: 'center', valign: 'middle', minCellHeight: 6, lineWidth: 0.1 },
-    headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
+    styles: { ...tableStyles, halign: 'center', valign: 'middle', minCellHeight: 6 },
+    headStyles: headStyles,
     columnStyles: { 2: { cellWidth: 60, halign: 'left' }, 3: {cellWidth: 35}, 4: {cellWidth: 35} },
   });
 
-  const bottomTableY = (doc as any).lastAutoTable.finalY + 2;
+  const bottomTablesStartY = (doc as any).lastAutoTable.finalY + 2;
+
+  // --- Left Column ---
+  let leftColumnFinalY = bottomTablesStartY;
 
   // Chemical Composition
   doc.autoTable({
       head: [['Chemical Composition']],
-      body: [],
-      startY: bottomTableY,
-      theme: 'grid',
-      styles: { fontSize: 9, fontStyle: 'bold', halign: 'center' },
-      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
-      didParseCell: (data) => { data.cell.styles.lineWidth = 0.1; }
+      startY: leftColumnFinalY,
+      theme: 'grid', styles: { ...tableStyles, fontSize: 9, fontStyle: 'bold', halign: 'center' }, headStyles: {...headStyles, minCellHeight: 7},
+      margin: { right: page_width / 2 }
   });
   doc.autoTable({
       head: [['Lot No.', 'C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'V%', 'Cu%', 'CE%']],
       body: chemicalData.map(r => [r.lot, r.c, r.mn, r.si, r.s, r.p, r.cr, r.ni, r.mo, r.v, r.cu, r.ce]),
       startY: (doc as any).lastAutoTable.finalY,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1, halign: 'center', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
+      theme: 'grid', styles: { ...tableStyles, halign: 'center', minCellHeight: 6 }, headStyles: headStyles,
+      margin: { right: page_width / 2 }
   });
-  const chemicalTableY = (doc as any).lastAutoTable.finalY;
+  leftColumnFinalY = (doc as any).lastAutoTable.finalY;
 
   // Physical Properties
   doc.autoTable({
       head: [['Physical Properties']],
-      body: [],
-      startY: chemicalTableY + 2,
-      theme: 'grid',
-      styles: { fontSize: 9, fontStyle: 'bold', halign: 'center' },
-      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
-      didParseCell: (data) => { data.cell.styles.lineWidth = 0.1; }
+      startY: leftColumnFinalY + 2,
+      theme: 'grid', styles: { ...tableStyles, fontSize: 9, fontStyle: 'bold', halign: 'center' }, headStyles: {...headStyles, minCellHeight: 7},
+      margin: { right: page_width / 2 }
   });
   doc.autoTable({
       head: [['Lot No.', 'Y.S\nN/mm2', 'U.T.S\nN/mm2', 'Elongation\n%', 'RA%', 'Hardness\nBHN']],
       body: physicalData.map(r => [r.lot, r.ys, r.uts, r.elong, r.ra, r.hardness]),
       startY: (doc as any).lastAutoTable.finalY,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1, halign: 'center', valign: 'middle', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
-      columnStyles: { 5: { cellWidth: 40 } }
+      theme: 'grid', styles: { ...tableStyles, halign: 'center', valign: 'middle', minCellHeight: 6 }, headStyles: headStyles,
+      columnStyles: { 5: { cellWidth: 40 } },
+      margin: { right: page_width / 2 }
   });
-  
-  const physicalTableY = (doc as any).lastAutoTable.finalY;
-  const leftColFinalY = physicalTableY;
-  
-  // --- Right column ---
-  const rightColX = 148;
-  // Laboratory Details
-  doc.autoTable({
-      head: [['Laboratory Details']],
-      body: [
-          [{content: 'Report No.', styles: {fontStyle: 'bold'}}, 'A/3304', {content: 'Report Date', styles: {fontStyle: 'bold'}}, '11/06/2025'],
-          [{content: 'Laboratory Name', styles: {fontStyle: 'bold', halign: 'left'}}, {content: 'Industrial Metal Test Lab P.L.', colSpan: 3, styles: {halign: 'left'}}]
-      ],
-      startY: bottomTableY, 
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold', halign: 'center', fillColor: false, textColor: 0 },
-      margin: { left: rightColX },
-      tableWidth: page_width - rightColX - margin,
-  });
-
-  // Charpy Impact Test
-  doc.autoTable({
-      head: [['Charpy Impact Test (Joules)']],
-      body: [],
-      startY: (doc as any).lastAutoTable.finalY + 2,
-      theme: 'grid',
-      styles: { fontSize: 9, fontStyle: 'bold', halign: 'center', lineWidth: 0.1 },
-      headStyles: { minCellHeight: 7, fillColor: false, textColor: 0 },
-      margin: { left: rightColX },
-      tableWidth: page_width - rightColX - margin,
-  });
-  doc.autoTable({
-      head: [['Size', 'TEMP C', 'I', 'II', 'III', 'Average']],
-      body: charpyData.map(r => [r.size, r.tempc, r.i, r.ii, r.iii, {content: r.avg, colSpan: 1, styles: {halign: 'left'}}]),
-      startY: (doc as any).lastAutoTable.finalY,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1, halign: 'center', minCellHeight: 6, lineWidth: 0.1 },
-      headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
-      margin: { left: rightColX },
-      tableWidth: page_width - rightColX - margin,
-  });
-
-  // Heat Test Details
-  doc.autoTable({
-      head: [['Heat Test Details']],
-      body: [['']],
-      startY: (doc as any).lastAutoTable.finalY + 2,
-      theme: 'grid',
-      styles: { fontSize: 9, fontStyle: 'bold', halign: 'center', minCellHeight: 10, lineWidth: 0.1 },
-      headStyles: {fillColor: false, textColor: 0},
-      margin: { left: rightColX },
-      tableWidth: page_width - rightColX - margin,
-  });
+  leftColumnFinalY = (doc as any).lastAutoTable.finalY;
 
   // Other Test & Remarks
   doc.autoTable({
     head: [['Other Test Details:']],
     body: [['1. Dye Penetrant Test Done Found Satisfactory']],
-    startY: leftColFinalY + 2,
-    theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 1, lineWidth: 0.1 },
-    headStyles: { fontStyle: 'bold', fillColor: false, textColor: 0 },
-    margin: { right: margin },
+    startY: leftColumnFinalY + 2,
+    theme: 'grid', styles: tableStyles, headStyles: headStyles,
+    margin: { right: page_width / 2 }
   });
+  leftColumnFinalY = (doc as any).lastAutoTable.finalY;
 
   doc.autoTable({
       head: [['Remarks:']],
@@ -201,16 +157,61 @@ export const generateCertificatePDF = (certificate: Certificate) => {
           ['1. We certify that the materials confirm to the dimension and material specification of the order'],
           ['2. Marking - Monogram / Size / Schedule / Rating / Spec / Lot No.'],
       ],
-      startY: (doc as any).lastAutoTable.finalY,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1, lineWidth: 0.1 },
-      headStyles: { fillColor: false, textColor: 0, fontStyle: 'bold' },
-      margin: { right: margin },
+      startY: leftColumnFinalY,
+      theme: 'grid', styles: tableStyles, headStyles: headStyles,
+      margin: { right: page_width / 2 }
   });
+  leftColumnFinalY = (doc as any).lastAutoTable.finalY;
 
+  // --- Right column ---
+  let rightColumnFinalY = bottomTablesStartY;
+  const rightColX = page_width / 2 + margin / 2;
+
+  // Laboratory Details
+  doc.autoTable({
+      head: [['Laboratory Details']],
+      body: [
+          [{content: 'Report No.', styles: {fontStyle: 'bold'}}, 'A/3304', {content: 'Report Date', styles: {fontStyle: 'bold'}}, '11/06/2025'],
+          [{content: 'Laboratory Name', styles: {fontStyle: 'bold', halign: 'left'}}, {content: 'Industrial Metal Test Lab P.L.', colSpan: 3, styles: {halign: 'left'}}]
+      ],
+      startY: rightColumnFinalY, 
+      theme: 'grid', styles: tableStyles, headStyles: {...headStyles, fontStyle: 'bold', halign: 'center'},
+      margin: { left: rightColX },
+      tableWidth: page_width - rightColX - margin,
+  });
+  rightColumnFinalY = (doc as any).lastAutoTable.finalY;
+
+  // Charpy Impact Test
+  doc.autoTable({
+      head: [['Charpy Impact Test (Joules)']],
+      startY: rightColumnFinalY + 2,
+      theme: 'grid', styles: { ...tableStyles, fontSize: 9, fontStyle: 'bold', halign: 'center' }, headStyles: {...headStyles, minCellHeight: 7},
+      margin: { left: rightColX },
+      tableWidth: page_width - rightColX - margin,
+  });
+  doc.autoTable({
+      head: [['Size', 'TEMP C', 'I', 'II', 'III', 'Average']],
+      body: charpyData.map(r => [r.size, r.tempc, r.i, r.ii, r.iii, {content: r.avg, colSpan: 1, styles: {halign: 'left'}}]),
+      startY: (doc as any).lastAutoTable.finalY,
+      theme: 'grid', styles: { ...tableStyles, halign: 'center', minCellHeight: 6 }, headStyles: headStyles,
+      margin: { left: rightColX },
+      tableWidth: page_width - rightColX - margin,
+  });
+  rightColumnFinalY = (doc as any).lastAutoTable.finalY;
+
+  // Heat Test Details
+  doc.autoTable({
+      head: [['Heat Test Details']],
+      body: [['']],
+      startY: rightColumnFinalY + 2,
+      theme: 'grid', styles: { ...tableStyles, fontSize: 9, fontStyle: 'bold', halign: 'center', minCellHeight: 10 }, headStyles: headStyles,
+      margin: { left: rightColX },
+      tableWidth: page_width - rightColX - margin,
+  });
+  rightColumnFinalY = (doc as any).lastAutoTable.finalY;
 
   // Footer
-  const finalY = (doc as any).lastAutoTable.finalY;
+  const finalY = Math.max(leftColumnFinalY, rightColumnFinalY);
   doc.setFontSize(9).setFont('helvetica', 'bold');
   doc.text('For FORGED INDUSTRIAL CORPORATION', page_width - 75, finalY + 15);
   doc.text('SURVEYOR', margin + 15, finalY + 25);
