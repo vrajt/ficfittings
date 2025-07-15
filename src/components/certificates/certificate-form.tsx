@@ -35,6 +35,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { customerData } from "@/lib/placeholder-data";
 import { FileDown, Loader2, PlusCircle } from "lucide-react";
 import { useTabs } from "../tabs/tab-provider";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const formSchema = z.object({
   docNo: z.string().min(1, "Document number is required"),
@@ -107,20 +108,34 @@ export function CertificateForm() {
               <TabsTrigger value="remarks">Remarks</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Certificate"
-                  )}
-                </Button>
-                <Button type="button" variant="outline" className="w-full sm:w-auto">
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Export PDF
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
+                        {isSubmitting ? (
+                            <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                            </>
+                        ) : (
+                            "Save Certificate"
+                        )}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Save the current certificate details.</p>
+                    </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="button" variant="outline" className="w-full sm:w-auto">
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Export PDF
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Export the certificate as a PDF document.</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
           </div>
           <div className="mt-6">
@@ -169,7 +184,14 @@ export function CertificateForm() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Heat Test Details</CardTitle>
-                        <Button type="button" size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Add Test</Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Add Test</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Add a new heat test result.</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </CardHeader>
                     <CardContent>
                         {/* A simple placeholder table can be used here. For real app, this should be dynamic */}
@@ -181,7 +203,14 @@ export function CertificateForm() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Other Test Details</CardTitle>
-                        <Button type="button" size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Add Test</Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" size="sm" variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Add Test</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Add a new result for other tests.</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </CardHeader>
                     <CardContent>
                          <p className="text-muted-foreground text-sm">Other test results will be managed and displayed here.</p>

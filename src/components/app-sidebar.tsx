@@ -54,15 +54,16 @@ export default function AppSidebar() {
       return (
         <Accordion key={item.title} type="single" collapsible defaultValue={defaultAccordionValue} className="w-full">
           <AccordionItem value={item.title} className="border-none">
-            <AccordionTrigger className={cn(
-              sidebarMenuButtonVariants(),
-              "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
-            )}>
-              <div className='flex items-center gap-2'>
-                <item.icon />
-                <span>{item.title}</span>
-              </div>
-            </AccordionTrigger>
+             <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
+                <AccordionTrigger className={cn(
+                  "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
+                )}>
+                  <div className='flex items-center gap-2'>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </div>
+                </AccordionTrigger>
+             </SidebarMenuButton>
             <AccordionContent className="p-0 pl-4">
               <SidebarMenu>
                 {item.children.map(renderNavItem)}
@@ -85,7 +86,7 @@ export default function AppSidebar() {
     return (
       <SidebarMenuItem key={item.title}>
         <a href={item.href} onClick={handleLinkClick} className="w-full block">
-          <SidebarMenuButton as="div" isActive={isActive}>
+          <SidebarMenuButton as="div" isActive={isActive} tooltip={item.title}>
             <item.icon />
             <span>{item.title}</span>
           </SidebarMenuButton>
@@ -110,7 +111,7 @@ export default function AppSidebar() {
       <SidebarFooter>
          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={logout}>
+                <SidebarMenuButton onClick={logout} tooltip="Logout">
                     <LogOut />
                     <span>Logout</span>
                 </SidebarMenuButton>

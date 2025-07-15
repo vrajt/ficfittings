@@ -33,6 +33,7 @@ import type { NavItem } from '@/lib/types';
 import { useTabs } from './tabs/tab-provider';
 import { Command } from "cmdk";
 import { useAuth } from '@/contexts/auth-context';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 const branches = [
     { id: 'main', name: 'Main Branch' },
@@ -96,13 +97,20 @@ export default function AppHeader() {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <PopoverAnchor asChild>
-                  <Input
-                  type="search"
-                  placeholder="Search menus..."
-                  className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  />
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Input
+                        type="search"
+                        placeholder="Search menus..."
+                        className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Search through all available menus and pages.</p>
+                    </TooltipContent>
+                </Tooltip>
               </PopoverAnchor>
             </div>
           <PopoverContent className="w-[320px] p-0" align="start">
@@ -131,9 +139,16 @@ export default function AppHeader() {
         </Popover>
 
         <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-            <SelectTrigger className="w-[180px] bg-card">
-                <SelectValue placeholder="Select a branch" />
-            </SelectTrigger>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <SelectTrigger className="w-[180px] bg-card">
+                        <SelectValue placeholder="Select a branch" />
+                    </SelectTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Switch between different company branches.</p>
+                </TooltipContent>
+            </Tooltip>
             <SelectContent>
                 {branches.map(branch => (
                     <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
@@ -143,20 +158,34 @@ export default function AppHeader() {
       </div>
 
       <div className="ml-auto flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Toggle notifications</span>
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>View Notifications</p>
+            </TooltipContent>
+        </Tooltip>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <Avatar>
-                <AvatarImage src="https://placehold.co/100x100.png" alt="Admin" data-ai-hint="user avatar" />
-                <AvatarFallback>AD</AvatarFallback>
-              </Avatar>
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" size="icon" className="rounded-full">
+                        <Avatar>
+                            <AvatarImage src="https://placehold.co/100x100.png" alt="Admin" data-ai-hint="user avatar" />
+                            <AvatarFallback>AD</AvatarFallback>
+                        </Avatar>
+                        <span className="sr-only">Toggle user menu</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>User Menu</p>
+                </TooltipContent>
+            </Tooltip>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Admin</DropdownMenuLabel>
             <DropdownMenuSeparator />

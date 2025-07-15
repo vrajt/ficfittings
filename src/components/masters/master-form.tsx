@@ -29,6 +29,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { masterDataConfig } from "@/lib/master-data-config";
 import { Loader2 } from "lucide-react";
 import { useTabs } from "../tabs/tab-provider";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface MasterFormProps {
     masterType: string;
@@ -141,16 +142,23 @@ export function MasterForm({ masterType }: MasterFormProps) {
                 )}/>
             </CardContent>
             <CardFooter className="justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                   {isSubmitting ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                        </>
-                    ) : (
-                        "Save"
-                    )}
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Save"
+                            )}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Save this master record.</p>
+                    </TooltipContent>
+                </Tooltip>
             </CardFooter>
         </Card>
       </form>

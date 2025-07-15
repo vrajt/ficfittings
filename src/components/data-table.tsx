@@ -38,6 +38,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { DatePickerWithRange } from './ui/date-range-picker';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 
 interface DataTableProps<TData, TValue> {
@@ -61,14 +62,28 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => (
       <div className="flex items-center justify-end gap-2">
-        <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
-          <span className="sr-only">Edit</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Delete</span>
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Edit record</p>
+            </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Delete record</p>
+            </TooltipContent>
+        </Tooltip>
       </div>
     ),
     meta: {
@@ -247,14 +262,28 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 className="hidden"
                 accept=".xlsx, .xls, .csv"
             />
-            <Button onClick={handleUploadClick} variant="outline" className="w-full sm:w-auto">
-                <Upload className="mr-2 h-4 w-4" />
-                Bulk Upload
-            </Button>
-            <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
-                <FileDown className="mr-2 h-4 w-4" />
-                Export
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleUploadClick} variant="outline" className="w-full sm:w-auto">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Bulk Upload
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Upload data from an Excel or CSV file.</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Export
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Export the current view to an Excel file.</p>
+                </TooltipContent>
+            </Tooltip>
         </div>
       </div>
       <div className="rounded-lg border flex-1">

@@ -2,6 +2,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PlusCircle } from "lucide-react";
 import { useTabs } from "./tabs/tab-provider";
 
@@ -30,10 +31,17 @@ export function PageHeader({ title, description, actionButtonText, actionButtonL
       </div>
       {actionButtonText && actionButtonLink && (
         <a href={actionButtonLink} onClick={handleActionClick} className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {actionButtonText}
-          </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button className="w-full sm:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {actionButtonText}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{actionButtonText}</p>
+                </TooltipContent>
+            </Tooltip>
         </a>
       )}
     </div>
