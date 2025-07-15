@@ -17,6 +17,13 @@ import {
   PopoverContent,
   PopoverAnchor,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Search } from "lucide-react";
 import { Input } from "./ui/input";
@@ -27,6 +34,11 @@ import { useTabs } from './tabs/tab-provider';
 import { Command } from "cmdk";
 import { useAuth } from '@/contexts/auth-context';
 
+const branches = [
+    { id: 'main', name: 'Main Branch' },
+    { id: 'ny', name: 'New York Office' },
+    { id: 'sf', name: 'San Francisco Hub' }
+];
 
 export default function AppHeader() {
   const router = useRouter();
@@ -34,6 +46,7 @@ export default function AppHeader() {
   const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const [selectedBranch, setSelectedBranch] = React.useState(branches[0].id);
 
   const flattenNavItems = (items: NavItem[]): NavItem[] => {
     const flatList: NavItem[] = [];
@@ -77,43 +90,58 @@ export default function AppHeader() {
       <div className="hidden md:block">
         <SidebarTrigger />
       </div>
-      <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <PopoverAnchor asChild>
-                <Input
-                type="search"
-                placeholder="Search menus..."
-                className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                />
-            </PopoverAnchor>
-          </div>
-        <PopoverContent className="w-[320px] p-0" align="start">
-          <Command>
-            <div className="p-2">
-            {filteredNavItems.length > 0 ? (
-                filteredNavItems.map(item => (
-                  <Button
-                    key={item.href}
-                    variant="ghost"
-                    className="w-full justify-start font-normal text-xs"
-                    onClick={() => handleSearchItemClick(item)}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.title}
-                  </Button>
-                ))
-            ) : (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                    No results found.
-                </div>
-            )}
+
+      <div className="flex items-center gap-4 flex-1">
+        <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <PopoverAnchor asChild>
+                  <Input
+                  type="search"
+                  placeholder="Search menus..."
+                  className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  />
+              </PopoverAnchor>
             </div>
-          </Command>
-        </PopoverContent>
-      </Popover>
+          <PopoverContent className="w-[320px] p-0" align="start">
+            <Command>
+              <div className="p-2">
+              {filteredNavItems.length > 0 ? (
+                  filteredNavItems.map(item => (
+                    <Button
+                      key={item.href}
+                      variant="ghost"
+                      className="w-full justify-start font-normal text-xs"
+                      onClick={() => handleSearchItemClick(item)}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.title}
+                    </Button>
+                  ))
+              ) : (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                      No results found.
+                  </div>
+              )}
+              </div>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[180px] bg-card">
+                <SelectValue placeholder="Select a branch" />
+            </SelectTrigger>
+            <SelectContent>
+                {branches.map(branch => (
+                    <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+      </div>
+
       <div className="ml-auto flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-full">
           <Bell className="h-5 w-5" />
