@@ -159,7 +159,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -188,8 +188,8 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             </Button>
         </div>
       </div>
-      <div className="rounded-lg border flex-1 overflow-hidden h-[500px]">
-        <ScrollArea className="h-full w-full">
+      <div className="rounded-lg border">
+        <ScrollArea className="h-[500px] w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (
