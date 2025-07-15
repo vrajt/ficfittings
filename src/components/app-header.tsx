@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,31 +12,108 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Command } from "lucide-react";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
+import { navConfig } from '@/lib/nav-config';
+import type { NavItem } from '@/lib/types';
+import { useTabs } from './tabs/tab-provider';
+import { cn } from '@/lib/utils';
 
 export default function AppHeader() {
   const router = useRouter();
+  const { addTab } = useTabs();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [filteredNavItems, setFilteredNavItems] = React.useState<NavItem[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
 
   const handleLogout = () => {
     router.push('/login');
   };
 
+  const flattenNavItems = (items: NavItem[]): NavItem[] => {
+    const flatList: NavItem[] = [];
+    items.forEach(item => {
+      if (item.href && item.href !== '#') {
+        flatList.push(item);
+      }
+      if (item.children) {
+        flatList.push(...flattenNavItems(item.children));
+      }
+    });
+    return flatList;
+  };
+
+  React.useEffect(() => {
+    if (searchQuery) {
+      const allNavItems = flattenNavItems(navConfig);
+      const filtered = allNavItems.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredNavItems(filtered);
+      setIsSearchOpen(true);
+    } else {
+      setFilteredNavItems([]);
+      setIsSearchOpen(false);
+    }
+  }, [searchQuery]);
+
+  const handleSearchItemClick = (item: NavItem) => {
+    if (item.href) {
+      addTab({ id: item.href, title: item.title, path: item.href });
+    }
+    setSearchQuery('');
+    setIsSearchOpen(false);
+  };
+
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
       <div className="hidden md:block">
         <SidebarTrigger />
       </div>
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search..."
-          className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
-        />
-      </div>
+      <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search menus..."
+              className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-[320px] p-0" align="start">
+          <Command>
+            <div className="p-2">
+            {filteredNavItems.length > 0 ? (
+                filteredNavItems.map(item => (
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    className="w-full justify-start font-normal"
+                    onClick={() => handleSearchItemClick(item)}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.title}
+                  </Button>
+                ))
+            ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                    No results found.
+                </div>
+            )}
+            </div>
+          </Command>
+        </PopoverContent>
+      </Popover>
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-full">
           <Bell className="h-5 w-5" />
