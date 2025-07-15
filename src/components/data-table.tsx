@@ -92,7 +92,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
       }
 
       return (
-          <Badge variant={badgeVariant} className={badgeClass}>
+          <Badge variant={badgeVariant} className={cn('whitespace-nowrap', badgeClass)}>
             {status}
           </Badge>
       );
@@ -158,18 +158,18 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="relative">
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Filter records..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-sm pl-9"
+            className="w-full sm:max-w-sm pl-9"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
             <input
                 type="file"
                 ref={fileInputRef}
@@ -177,18 +177,18 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 className="hidden"
                 accept=".xlsx, .xls, .csv"
             />
-            <Button onClick={handleUploadClick} variant="outline">
+            <Button onClick={handleUploadClick} variant="outline" className="w-full">
                 <Upload className="mr-2 h-4 w-4" />
                 Bulk Upload
             </Button>
-            <Button onClick={handleExport} variant="outline">
+            <Button onClick={handleExport} variant="outline" className="w-full">
                 <FileDown className="mr-2 h-4 w-4" />
-                Export to Excel
+                Export
             </Button>
         </div>
       </div>
-      <div className="rounded-lg border">
-        <ScrollArea className="h-[60vh] w-full">
+      <div className="rounded-lg border flex-1 overflow-hidden">
+        <ScrollArea className="h-full w-full">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -226,12 +226,12 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} record(s).
         </div>
-        <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
                 <p className="text-sm font-medium">Rows per page</p>
                 <Select
                     value={`${table.getState().pagination.pageSize}`}
@@ -251,16 +251,17 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            <div className="flex w-full sm:w-[100px] items-center justify-center text-sm font-medium">
                 Page {table.getState().pagination.pageIndex + 1} of{' '}
                 {table.getPageCount()}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
                 <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
+                className="w-full"
                 >
                 Previous
                 </Button>
@@ -269,6 +270,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 size="sm"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
+                className="w-full"
                 >
                 Next
                 </Button>
@@ -278,3 +280,5 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     </div>
   );
 }
+
+    
