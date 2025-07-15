@@ -15,14 +15,16 @@ export default function MasterTypePage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="flex flex-col h-full space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
         title={config.title}
         description={config.description}
         actionButtonText={`Add New ${config.title.replace(' Master', '')}`}
         actionButtonLink={`/masters/${masterType}/new`}
       />
-      <DataTable columns={config.columns} data={config.data} />
+      <div className="flex-grow">
+        <DataTable columns={config.columns} data={config.data} />
+      </div>
     </div>
   );
 }

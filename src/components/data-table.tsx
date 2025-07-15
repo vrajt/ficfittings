@@ -138,7 +138,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,10 +154,10 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
           Export to Excel
         </Button>
       </div>
-      <Card className="overflow-hidden">
-        <ScrollArea className="w-full">
+      <div className="flex-grow overflow-hidden rounded-lg border">
+        <ScrollArea className="h-full">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-card z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -192,7 +192,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
           </Table>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
-      </Card>
+      </div>
       <div className="flex items-center justify-between py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} record(s).
