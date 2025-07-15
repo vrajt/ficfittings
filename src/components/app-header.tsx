@@ -60,14 +60,6 @@ export default function AppHeader() {
   }, [searchQuery, allNavItems]);
 
 
-  React.useEffect(() => {
-    if (searchQuery) {
-        if(!isSearchOpen) setIsSearchOpen(true);
-    } else {
-        if(isSearchOpen) setIsSearchOpen(false);
-    }
-  }, [searchQuery, isSearchOpen]);
-
   const handleSearchItemClick = (item: NavItem) => {
     if (item.href) {
       addTab({ id: item.href, title: item.title, path: item.href });
@@ -77,7 +69,13 @@ export default function AppHeader() {
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (query && !isSearchOpen) {
+      setIsSearchOpen(true);
+    } else if (!query && isSearchOpen) {
+      setIsSearchOpen(false);
+    }
   };
 
   return (
@@ -95,6 +93,9 @@ export default function AppHeader() {
               className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
               value={searchQuery}
               onChange={handleSearchChange}
+              onFocus={() => {
+                if(searchQuery) setIsSearchOpen(true)
+              }}
             />
           </div>
         </PopoverTrigger>
