@@ -49,10 +49,12 @@ export default function AppSidebar() {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <Link href={item.href} passHref>
+        <Link href={item.href} passHref legacyBehavior>
           <SidebarMenuButton asChild isActive={isActive}>
-            <item.icon />
-            <span>{item.title}</span>
+            <a>
+              <item.icon />
+              <span>{item.title}</span>
+            </a>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
