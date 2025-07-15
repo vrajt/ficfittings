@@ -39,6 +39,8 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { DatePickerWithRange } from './ui/date-range-picker';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { generateCertificatePDF } from '@/lib/pdf-generator';
+import type { Certificate } from '@/lib/types';
 
 
 interface DataTableProps<TData, TValue> {
@@ -57,11 +59,29 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
+  const handleDownload = (rowData: TData) => {
+    // Assuming rowData conforms to at least a partial Certificate type
+    generateCertificatePDF(rowData as Certificate);
+  };
+
   const actionColumn: ColumnDef<TData> = {
     id: 'actions',
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => (
       <div className="flex items-center justify-end gap-2">
+         {propColumns.some((c: any) => c.accessorKey === 'certificateNumber') && (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => handleDownload(row.original)}>
+                        <FileDown className="h-4 w-4" />
+                        <span className="sr-only">Download</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download PDF</p>
+                </TooltipContent>
+            </Tooltip>
+        )}
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon">
