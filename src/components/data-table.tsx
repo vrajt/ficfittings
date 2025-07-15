@@ -56,17 +56,6 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
-  React.useEffect(() => {
-    const dateColumn = table.getColumn('date');
-    if (dateColumn) {
-      if (dateRange?.from && dateRange?.to) {
-        dateColumn.setFilterValue([dateRange.from, dateRange.to]);
-      } else {
-        dateColumn.setFilterValue(undefined);
-      }
-    }
-  }, [dateRange, /*table*/]);
-
   const actionColumn: ColumnDef<TData> = {
     id: 'actions',
     header: () => <div className="text-right">Actions</div>,
@@ -149,6 +138,25 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     }
   });
 
+  const hasDateColumn = React.useMemo(
+    () => propColumns.some((c: any) => c.accessorKey === 'date'),
+    [propColumns]
+  );
+  
+  React.useEffect(() => {
+    if (hasDateColumn) {
+        const dateColumn = table.getColumn('date');
+        if (dateColumn) {
+          if (dateRange?.from && dateRange?.to) {
+            dateColumn.setFilterValue([dateRange.from, dateRange.to]);
+          } else {
+            dateColumn.setFilterValue(undefined);
+          }
+        }
+    }
+  }, [dateRange, table, hasDateColumn]);
+
+
   const handleExport = () => {
     const dataToExport = table.getFilteredRowModel().rows.map(row => {
         const exportedRow: Record<string, any> = {};
@@ -210,8 +218,6 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         </div>
     );
   }
-
-  const hasDateColumn = columns.some(c => (c as any).accessorKey === 'date');
 
   return (
     <div className="flex flex-1 flex-col gap-4">
