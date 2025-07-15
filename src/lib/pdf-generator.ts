@@ -15,7 +15,7 @@ export const generateCertificatePDF = (certificate: Certificate) => {
   // In a real app, this data would come from the certificate object or related records
   const itemDescriptionData = [
     { sr: '1', poSr: 'PO/123', desc: 'Forged Pipe Flange', spec: 'ASTM A105', dim: 'ASME B16.11', size: '15 NB', lot: 'N514', qty: '10', uom: 'NOS' },
-    // ... more items
+    // ... more items for a full page
   ];
 
   const chemicalData = [
