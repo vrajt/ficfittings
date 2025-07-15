@@ -1,10 +1,6 @@
 import { GenericMaster, Customer, Certificate } from './types';
 import { genericMasterData, customerData, certificateData } from './placeholder-data';
-
-type ColumnDef<T> = {
-  accessorKey: keyof T;
-  header: string;
-};
+import type { ColumnDef } from '@tanstack/react-table';
 
 interface MasterConfig<T> {
   title: string;
