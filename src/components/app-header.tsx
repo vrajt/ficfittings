@@ -100,7 +100,7 @@ export default function AppHeader() {
                   <Button
                     key={item.href}
                     variant="ghost"
-                    className="w-full justify-start font-normal"
+                    className="w-full justify-start font-normal text-xs"
                     onClick={() => handleSearchItemClick(item)}
                   >
                     <item.icon className="mr-2 h-4 w-4" />
