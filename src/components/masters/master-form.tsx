@@ -29,7 +29,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTabs } from "../tabs/tab-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { masterDataConfig } from "@/lib/master-data-config";
 
 
 interface MasterFormProps {
@@ -61,10 +60,6 @@ const createFormSchema = (formFields: {key: string, type: string}[]) => {
 }
 
 const getFormFields = (masterType: string) => {
-    if (masterDataConfig[masterType as keyof typeof masterDataConfig]) {
-      return masterDataConfig[masterType as keyof typeof masterDataConfig].columns.map(c => ({ key: c.accessorKey, header: c.header }) as {key: string, header: string});
-    }
-    // A fallback for the refactored pages that might still use the component
      switch (masterType) {
         case 'customers':
             return [
