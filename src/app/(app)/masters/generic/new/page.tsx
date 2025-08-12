@@ -2,17 +2,15 @@
 'use client';
 import { MasterForm } from '@/components/masters/master-form';
 import { PageHeader } from '@/components/page-header';
-import { masterDataConfig } from '@/lib/master-data-config';
 
 export default function NewGenericMasterPage() {
   const masterType = 'generic';
-  const config = masterDataConfig[masterType];
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
-        title={`New ${config.title.replace(' Master', '')}`}
-        description={`Fill in the details to create a new ${config.title.toLowerCase()}.`}
+        title="New Generic Item"
+        description="Fill in the details to create a new generic item."
       />
       <MasterForm masterType={masterType} />
     </div>

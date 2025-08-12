@@ -26,36 +26,74 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { usePathname, useRouter } from "next/navigation";
-import { masterDataConfig } from "@/lib/master-data-config";
 import { Loader2 } from "lucide-react";
 import { useTabs } from "../tabs/tab-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { masterDataConfig } from "@/lib/master-data-config";
+
 
 interface MasterFormProps {
     masterType: string;
 }
 
-const createFormSchema = (masterType: string) => {
-    const config = masterDataConfig[masterType as keyof typeof masterDataConfig];
+const createFormSchema = (formFields: {key: string, type: string}[]) => {
     let schema = z.object({
         name: z.string().min(1, "Name is required"),
         status: z.enum(["Active", "Inactive"]),
     });
 
-    if (config.columns.some(c => c.accessorKey === 'code')) {
-        schema = schema.extend({ code: z.string().min(1, "Code is required") });
-    }
-    if (config.columns.some(c => c.accessorKey === 'description')) {
-        schema = schema.extend({ description: z.string().optional() });
-    }
-    if (config.columns.some(c => c.accessorKey === 'address')) {
-        schema = schema.extend({ address: z.string().min(1, "Address is required") });
-    }
-    if (config.columns.some(c => c.accessorKey === 'contactPerson')) {
-        schema = schema.extend({ contactPerson: z.string().min(1, "Contact person is required") });
+    const fieldToSchema = {
+      code: z.string().min(1, "Code is required"),
+      description: z.string().optional(),
+      address: z.string().min(1, "Address is required"),
+      contactPerson: z.string().min(1, "Contact person is required"),
     }
 
+    formFields.forEach(field => {
+        if (field.key === 'name' || field.key === 'status') return;
+
+        if (fieldToSchema.hasOwnProperty(field.key)) {
+            schema = schema.extend({ [field.key]: fieldToSchema[field.key as keyof typeof fieldToSchema] });
+        }
+    });
+
     return schema;
+}
+
+const getFormFields = (masterType: string) => {
+    if (masterDataConfig[masterType as keyof typeof masterDataConfig]) {
+      return masterDataConfig[masterType as keyof typeof masterDataConfig].columns.map(c => ({ key: c.accessorKey, header: c.header }) as {key: string, header: string});
+    }
+    // A fallback for the refactored pages that might still use the component
+     switch (masterType) {
+        case 'customers':
+            return [
+                { key: 'name', header: 'Name' },
+                { key: 'address', header: 'Address' },
+                { key: 'contactPerson', header: 'Contact Person' },
+            ];
+        case 'units':
+        case 'grades':
+        case 'product-grades':
+        case 'dimension-standards':
+        case 'start-materials':
+        case 'laboratories':
+        case 'heat-tests':
+        case 'other-tests':
+        case 'generic':
+             return [
+                { key: 'code', header: 'Code' },
+                { key: 'name', header: 'Name' },
+                { key: 'description', header: 'Description' },
+            ];
+        case 'tc-remarks':
+             return [
+                { key: 'name', header: 'Remark' },
+                { key: 'description', header: 'Details' },
+            ];
+        default:
+            return [{key: 'name', header: 'Name'}];
+    }
 }
 
 
@@ -64,10 +102,9 @@ export function MasterForm({ masterType }: MasterFormProps) {
   const pathname = usePathname();
   const { removeTab } = useTabs();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const config = masterDataConfig[masterType as keyof typeof masterDataConfig];
   
-  const formSchema = createFormSchema(masterType);
+  const formFields = getFormFields(masterType);
+  const formSchema = createFormSchema(formFields.map(f => ({key: f.key, type: 'string'})));
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -85,7 +122,7 @@ export function MasterForm({ masterType }: MasterFormProps) {
     setTimeout(() => {
         toast({
             title: "Master Saved",
-            description: `The new ${config.title.replace(' Master', '').toLowerCase()} has been saved successfully.`,
+            description: `The new record has been saved successfully.`,
         });
         setIsSubmitting(false);
         removeTab(pathname);
@@ -101,15 +138,15 @@ export function MasterForm({ masterType }: MasterFormProps) {
                 <CardTitle>Master Details</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 {config.columns.map(col => {
-                    const key = col.accessorKey as string;
-                    if (key === 'id' || key === 'status') return null;
+                 {formFields.map(field => {
+                    const key = field.key;
+                    if (key === 'id' || key === 'status' || key === 'date' || key.toLowerCase().includes('at') || key.toLowerCase().includes('by')) return null;
 
                     if (key === 'description' || key === 'address') {
                         return (
                              <FormField key={key} control={form.control} name={key} render={({ field }) => (
                                 <FormItem className="md:col-span-2">
-                                    <FormLabel>{col.header}</FormLabel>
+                                    <FormLabel>{field.header}</FormLabel>
                                     <FormControl><Textarea {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -118,10 +155,10 @@ export function MasterForm({ masterType }: MasterFormProps) {
                     }
 
                     return (
-                        <FormField key={key} control={form.control} name={key} render={({ field }) => (
+                        <FormField key={key} control={form.control} name={key} render={({ field: formField }) => (
                             <FormItem>
-                                <FormLabel>{col.header}</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
+                                <FormLabel>{field.header}</FormLabel>
+                                <FormControl><Input {...formField} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>

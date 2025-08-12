@@ -2,12 +2,23 @@
 'use client';
 import { DataTable } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
-import { masterDataConfig } from '@/lib/master-data-config';
+import { genericMasterData } from '@/lib/placeholder-data';
+import type { GenericMaster } from '@/lib/types';
+import type { ColumnDef } from '@tanstack/react-table';
 import * as React from 'react';
+
+const columns: ColumnDef<GenericMaster>[] = [
+    { accessorKey: 'code', header: 'Code' },
+    { accessorKey: 'name', header: 'Material Name' },
+    { accessorKey: 'description', header: 'Description' },
+    { accessorKey: 'date', header: 'Created At' },
+    { accessorKey: 'createdBy', header: 'Created By' },
+    { accessorKey: 'updatedBy', header: 'Updated By' },
+    { accessorKey: 'updatedAt', header: 'Updated At' },
+];
 
 export default function StartMaterialsPage() {
   const masterType = 'start-materials';
-  const config = masterDataConfig[masterType];
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -20,12 +31,12 @@ export default function StartMaterialsPage() {
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
-        title={config.title}
-        description={config.description}
-        actionButtonText={`Add New ${config.title.replace(' Master', '')}`}
+        title="Start Material Master"
+        description="Manage types of starting materials."
+        actionButtonText="Add New Start Material"
         actionButtonLink={`/masters/${masterType}/new`}
       />
-      <DataTable columns={config.columns} data={config.data} isLoading={isLoading} />
+      <DataTable columns={columns} data={genericMasterData['start-materials']} isLoading={isLoading} />
     </div>
   );
 }
