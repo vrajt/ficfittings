@@ -3,16 +3,10 @@
 import { MasterForm } from '@/components/masters/master-form';
 import { PageHeader } from '@/components/page-header';
 import { masterDataConfig } from '@/lib/master-data-config';
-import { notFound, useParams } from 'next/navigation';
 
-export default function NewMasterPage() {
-  const params = useParams();
-  const masterType = params.masterType as string;
-  const config = masterDataConfig[masterType as keyof typeof masterDataConfig];
-
-  if (!config) {
-    notFound();
-  }
+export default function NewGenericMasterPage() {
+  const masterType = 'generic';
+  const config = masterDataConfig[masterType];
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">

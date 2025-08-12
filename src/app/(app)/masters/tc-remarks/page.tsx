@@ -3,13 +3,11 @@
 import { DataTable } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
 import { masterDataConfig } from '@/lib/master-data-config';
-import { notFound, useParams } from 'next/navigation';
 import * as React from 'react';
 
-export default function MasterTypePage() {
-  const params = useParams();
-  const masterType = params.masterType as string;
-  const config = masterDataConfig[masterType as keyof typeof masterDataConfig];
+export default function TcRemarksPage() {
+  const masterType = 'tc-remarks';
+  const config = masterDataConfig[masterType];
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -17,11 +15,7 @@ export default function MasterTypePage() {
       setIsLoading(false);
     }, 1000); // Simulate network delay
     return () => clearTimeout(timer);
-  }, [masterType]);
-
-  if (!config) {
-    notFound();
-  }
+  }, []);
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
