@@ -42,7 +42,7 @@ export const navConfig: NavItem[] = [
       { title: 'Grades', href: '/masters/grades', icon: Award, masterType: 'grades' },
       { title: 'Product Grades', href: '/masters/product-grades', icon: Medal, masterType: 'product-grades' },
       { title: 'TC Remarks', href: '/masters/tc-remarks', icon: MessageSquareText, masterType: 'tc-remarks' },
-      { title: 'Customers', href: '/masters/customers', icon: Users, masterType: 'customers' },
+      { title: 'Customers', href: '/masters/customers', icon: Users, masterType: 'customermaster' },
       { title: 'Dimension Standards', href: '/masters/dimension-standards', icon: Ruler, masterType: 'dimension-standards' },
       { title: 'Start Materials', href: '/masters/start-materials', icon: Component, masterType: 'start-materials' },
       { title: 'Laboratories', href: '/masters/laboratories', icon: FlaskConical, masterType: 'laboratories' },

@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table';
 import * as XLSX from 'xlsx';
 import type { DateRange } from "react-day-picker";
+import axios from 'axios';
 
 import {
   Table,
@@ -55,17 +56,22 @@ import { generateCertificatePDF } from '@/lib/pdf-generator';
 import type { Certificate } from '@/lib/types';
 import { Checkbox } from './ui/checkbox';
 
-
 interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   isLoading?: boolean;
+  masterType?: string;
+  onRefresh?: () => void;
+  onEdit?: (data: TData) => void;
 }
 
 export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft', date?: string }, TValue>({
   data,
   columns: propColumns,
   isLoading = false,
+  masterType,
+  onRefresh,
+  onEdit,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -74,18 +80,49 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
   const handleDownload = (rowData: TData) => {
-    // Assuming rowData conforms to at least a partial Certificate type
     generateCertificatePDF(rowData as Certificate);
   };
   
-  const handleDeleteSelected = () => {
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`/api/${masterType}/${id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The record with ID ${id} has been deleted.`,
+        variant: 'success'
+      });
+      onRefresh?.();
+    } catch (error) {
+      console.error(`Failed to delete record ${id}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the record. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteSelected = async () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
-    toast({
-        title: "Deletion confirmed",
-        description: `${selectedRows.length} record(s) have been marked for deletion.`,
-    });
-    console.log("Deleting rows:", selectedRows.map(r => r.original.id));
-    table.resetRowSelection();
+    const idsToDelete = selectedRows.map(r => r.original.id);
+    
+    try {
+      await Promise.all(idsToDelete.map(id => axios.delete(`/api/${masterType}/${id}`)));
+      toast({
+        title: "Bulk Deletion Successful",
+        description: `${selectedRows.length} record(s) have been deleted.`,
+        variant: 'success'
+      });
+      onRefresh?.();
+      table.resetRowSelection();
+    } catch(error) {
+      console.error(`Failed to delete selected records:`, error);
+      toast({
+        title: "Bulk Deletion Failed",
+        description: "Could not delete the selected records. Please try again.",
+        variant: 'destructive'
+      });
+    }
   };
 
   const selectionColumn: ColumnDef<TData> = {
@@ -131,7 +168,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
         )}
         <Tooltip>
             <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" onClick={() => onEdit?.(row.original)}>
                     <Pencil className="h-4 w-4" />
                     <span className="sr-only">Edit</span>
                 </Button>
@@ -140,17 +177,33 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                 <p>Edit record</p>
             </TooltipContent>
         </Tooltip>
-        <Tooltip>
+        <AlertDialog>
+          <Tooltip>
             <TooltipTrigger asChild>
+              <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Delete</span>
                 </Button>
+              </AlertDialogTrigger>
             </TooltipTrigger>
             <TooltipContent>
                 <p>Delete record</p>
             </TooltipContent>
-        </Tooltip>
+          </Tooltip>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete this record.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDelete(row.original.id)}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     ),
     meta: {
@@ -188,7 +241,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     },
   };
   
-  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns]);
+  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns, onEdit, masterType]);
 
   const table = useReactTable({
     data,

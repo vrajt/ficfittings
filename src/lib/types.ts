@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 
 export type MasterType =
@@ -6,7 +7,7 @@ export type MasterType =
   | 'grades'
   | 'product-grades'
   | 'tc-remarks'
-  | 'customers'
+  | 'customermaster'
   | 'dimension-standards'
   | 'start-materials'
   | 'laboratories'
@@ -38,12 +39,19 @@ export type GenericMaster = BaseEntity & {
   description?: string;
   code?: string;
   status: 'Active' | 'Inactive';
+  // Fields for Unit Master
+  uDecimal?: number;
+  gstUom?: string;
+  uomType?: string;
 };
 
 export type Customer = BaseEntity & {
     name: string;
     address: string;
-    contactPerson: string;
+    teleOff?: string;
+    mobile?: string;
+    email1?: string;
+    isBlocked?: boolean;
     status: 'Active' | 'Inactive';
 };
 

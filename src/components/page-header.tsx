@@ -11,13 +11,18 @@ interface PageHeaderProps {
   description?: string;
   actionButtonText?: string;
   actionButtonLink?: string;
+  onActionClick?: (e: React.MouseEvent) => void;
 }
 
-export function PageHeader({ title, description, actionButtonText, actionButtonLink }: PageHeaderProps) {
+export function PageHeader({ title, description, actionButtonText, actionButtonLink, onActionClick }: PageHeaderProps) {
   const { addTab } = useTabs();
 
   const handleActionClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (onActionClick) {
+        onActionClick(e);
+        return;
+    }
     if (actionButtonLink && actionButtonText) {
       addTab({ id: actionButtonLink, title: actionButtonText, path: actionButtonLink });
     }
@@ -29,8 +34,8 @@ export function PageHeader({ title, description, actionButtonText, actionButtonL
         <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground">{title}</h1>
         {description && <p className="text-muted-foreground text-sm">{description}</p>}
       </div>
-      {actionButtonText && actionButtonLink && (
-        <a href={actionButtonLink} onClick={handleActionClick} className="w-full sm:w-auto">
+      {actionButtonText && (
+        <a href={actionButtonLink || '#'} onClick={handleActionClick} className="w-full sm:w-auto">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button className="w-full sm:w-auto">

@@ -16,183 +16,188 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useTabs } from "../tabs/tab-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-
+import type { GenericMaster } from "@/lib/types";
+import axios from "axios";
+import { Combobox } from "../ui/combobox";
 
 interface MasterFormProps {
-    masterType: string;
+  masterType: string;
+  initialData?: GenericMaster | null;
+  onSave?: () => void;
 }
 
-const createFormSchema = (formFields: {key: string, type: string}[]) => {
-    let schema = z.object({
-        name: z.string().min(1, "Name is required"),
-        status: z.enum(["Active", "Inactive"]),
-    });
-
-    const fieldToSchema = {
-      code: z.string().min(1, "Code is required"),
-      description: z.string().optional(),
-      address: z.string().min(1, "Address is required"),
-      contactPerson: z.string().min(1, "Contact person is required"),
-    }
-
-    formFields.forEach(field => {
-        if (field.key === 'name' || field.key === 'status') return;
-
-        if (fieldToSchema.hasOwnProperty(field.key)) {
-            schema = schema.extend({ [field.key]: fieldToSchema[field.key as keyof typeof fieldToSchema] });
-        }
-    });
-
-    return schema;
-}
-
-const getFormFields = (masterType: string) => {
-     switch (masterType) {
-        case 'customers':
-            return [
-                { key: 'name', header: 'Name' },
-                { key: 'address', header: 'Address' },
-                { key: 'contactPerson', header: 'Contact Person' },
-            ];
-        case 'units':
-        case 'grades':
-        case 'product-grades':
-        case 'dimension-standards':
-        case 'start-materials':
-        case 'laboratories':
-        case 'heat-tests':
-        case 'other-tests':
-        case 'generic':
-             return [
-                { key: 'code', header: 'Code' },
-                { key: 'name', header: 'Name' },
-                { key: 'description', header: 'Description' },
-            ];
-        case 'tc-remarks':
-             return [
-                { key: 'name', header: 'Remark' },
-                { key: 'description', header: 'Details' },
-            ];
-        default:
-            return [{key: 'name', header: 'Name'}];
-    }
-}
+const formSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().optional(),
+    uDecimal: z.preprocess((val) => Number(val), z.number().min(0, "Must be a positive number")),
+    gstUom: z.string().min(1, "GST UOM is required"),
+    uomType: z.string().min(1, "UOM Type is required"),
+});
 
 
-export function MasterForm({ masterType }: MasterFormProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { removeTab } = useTabs();
+export function MasterForm({ masterType, initialData, onSave }: MasterFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [uomOptions, setUomOptions] = React.useState<{ label: string; value: string }[]>([]);
   
-  const formFields = getFormFields(masterType);
-  const formSchema = createFormSchema(formFields.map(f => ({key: f.key, type: 'string'})));
+  const isEditMode = !!initialData;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
         name: "",
-        status: "Active",
+        description: "",
+        uDecimal: 0,
+        gstUom: "",
+        uomType: "",
+        ...initialData,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    console.log(values);
-
-    // Simulate API call
-    setTimeout(() => {
+  React.useEffect(() => {
+    async function fetchUoms() {
+      try {
+        const response = await axios.get('/api/uom/getAllGsstUom');
+        const data = response.data.map((item: { UOM: string }) => ({
+          label: item.UOM,
+          value: item.UOM,
+        }));
+        setUomOptions(data);
+      } catch (error) {
+        console.error("Failed to fetch UOMs:", error);
         toast({
-            title: "Master Saved",
-            description: `The new record has been saved successfully.`,
+          title: "Error",
+          description: "Could not load UOM list.",
+          variant: "destructive",
         });
+      }
+    }
+    fetchUoms();
+  }, []);
+
+  React.useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        uDecimal: 0,
+        gstUom: "",
+        uomType: ""
+      });
+    }
+  }, [initialData, form]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    
+    const apiData = {
+        UnitName: values.name,
+        UDecimal: values.uDecimal,
+        GSTUOM: values.gstUom,
+        UOM_Type: values.uomType,
+        Description: values.description,
+    };
+    
+    try {
+        if (isEditMode) {
+          await axios.put(`/api/unitmaster/${initialData?.id}`, apiData);
+            toast({
+                title: "Master Updated",
+                description: `The record has been updated successfully.`,
+            });
+        } else {
+            await axios.post(`/api/unitmaster`, apiData);
+            toast({
+                title: "Master Saved",
+                description: `The new record has been saved successfully.`,
+            });
+        }
+        onSave?.();
+
+    } catch (error) {
+        toast({
+            title: "Submission Failed",
+            description: "An error occurred while saving the record.",
+            variant: 'destructive',
+        });
+        console.error("Submission error:", error);
+    } finally {
         setIsSubmitting(false);
-        removeTab(pathname);
-        router.push(`/masters/${masterType}`);
-    }, 1500); // 1.5 second delay
+    }
   }
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card>
-            <CardHeader>
-                <CardTitle>Master Details</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 {formFields.map(field => {
-                    const key = field.key;
-                    if (key === 'id' || key === 'status' || key === 'date' || key.toLowerCase().includes('at') || key.toLowerCase().includes('by')) return null;
-
-                    if (key === 'description' || key === 'address') {
-                        return (
-                             <FormField key={key} control={form.control} name={key} render={({ field }) => (
-                                <FormItem className="md:col-span-2">
-                                    <FormLabel>{field.header}</FormLabel>
-                                    <FormControl><Textarea {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
-                        )
-                    }
-
-                    return (
-                        <FormField key={key} control={form.control} name={key} render={({ field: formField }) => (
-                            <FormItem>
-                                <FormLabel>{field.header}</FormLabel>
-                                <FormControl><Input {...formField} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-                    )
-                 })}
-                 <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="Active">Active</SelectItem>
-                                <SelectItem value="Inactive">Inactive</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}/>
-            </CardContent>
-            <CardFooter className="justify-end">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                "Save"
-                            )}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Save this master record.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </CardFooter>
-        </Card>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Unit Name</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+              )}/>
+              <FormField control={form.control} name="uDecimal" render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Decimal Places</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+              )}/>
+               <FormField
+                control={form.control}
+                name="gstUom"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>GST UOM</FormLabel>
+                     <Combobox
+                      options={uomOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select or type a UOM..."
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="uomType" render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>UOM Type</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+              )}/>
+              <FormField control={form.control} name="description" render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                      <FormLabel>Description</FormLabel>
+                      <FormControl><Textarea {...field} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+              )}/>
+          </div>
+          <div className="flex justify-end pt-4">
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                              <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving...
+                              </>
+                          ) : (
+                              "Save"
+                          )}
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>Save this master record.</p>
+                  </TooltipContent>
+              </Tooltip>
+          </div>
       </form>
     </Form>
   );
