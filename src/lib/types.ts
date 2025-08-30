@@ -7,11 +7,12 @@ export type MasterType =
   | 'grades'
   | 'product-grades'
   | 'tc-remarks'
-  | 'customermaster'
+  | 'tcremarksfix'
+  | 'customers'
   | 'dimension-standards'
   | 'start-materials'
   | 'laboratories'
-  | 'heat-tests'
+  | 'heattestmaster'
   | 'other-tests';
 
 export type PageType = 'alerts';
@@ -38,11 +39,19 @@ export type GenericMaster = BaseEntity & {
   name: string;
   description?: string;
   code?: string;
-  status: 'Active' | 'Inactive';
+  status?: 'Active' | 'Inactive';
   // Fields for Unit Master
   uDecimal?: number;
   gstUom?: string;
   uomType?: string;
+  // Fields for Customer Master
+  address?: string;
+  teleOff?: string;
+  mobile?: string;
+  email1?: string;
+  isBlocked?: boolean;
+  // Fields for TC Remarks
+  tcChoice?: string;
 };
 
 export type Customer = BaseEntity & {

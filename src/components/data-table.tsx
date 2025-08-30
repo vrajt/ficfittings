@@ -63,6 +63,7 @@ interface DataTableProps<TData, TValue> {
   masterType?: string;
   onRefresh?: () => void;
   onEdit?: (data: TData) => void;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft', date?: string }, TValue>({
@@ -72,6 +73,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   masterType,
   onRefresh,
   onEdit,
+  onDelete,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -84,21 +86,27 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   };
   
   const handleDelete = async (id: string) => {
-    try {
-      await axios.delete(`/api/${masterType}/${id}`);
-      toast({
-        title: "Record Deleted",
-        description: `The record with ID ${id} has been deleted.`,
-        variant: 'success'
-      });
-      onRefresh?.();
-    } catch (error) {
-      console.error(`Failed to delete record ${id}:`, error);
-      toast({
-        title: "Deletion Failed",
-        description: "Could not delete the record. Please try again.",
-        variant: 'destructive'
-      });
+    if (onDelete) {
+        await onDelete(id);
+        onRefresh?.();
+        return;
+    }
+    if (masterType) {
+        try {
+            await axios.delete(`/api/${masterType}/${id}`);
+            toast({
+                title: "Record Deleted",
+                description: `The record with ID ${id} has been deleted.`,
+            });
+            onRefresh?.();
+        } catch (error) {
+            console.error(`Failed to delete record ${id}:`, error);
+            toast({
+                title: "Deletion Failed",
+                description: "Could not delete the record. Please try again.",
+                variant: 'destructive'
+            });
+        }
     }
   };
 
@@ -107,14 +115,21 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     const idsToDelete = selectedRows.map(r => r.original.id);
     
     try {
-      await Promise.all(idsToDelete.map(id => axios.delete(`/api/${masterType}/${id}`)));
-      toast({
-        title: "Bulk Deletion Successful",
-        description: `${selectedRows.length} record(s) have been deleted.`,
-        variant: 'success'
-      });
-      onRefresh?.();
-      table.resetRowSelection();
+        if (onDelete) {
+            await Promise.all(idsToDelete.map(id => onDelete(id)));
+        } else if (masterType) {
+            await Promise.all(idsToDelete.map(id => axios.delete(`/api/${masterType}/${id}`)));
+        } else {
+            throw new Error("No delete handler provided");
+        }
+        
+        toast({
+            title: "Bulk Deletion Successful",
+            description: `${selectedRows.length} record(s) have been deleted.`,
+        });
+        onRefresh?.();
+        table.resetRowSelection();
+
     } catch(error) {
       console.error(`Failed to delete selected records:`, error);
       toast({
@@ -241,7 +256,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
     },
   };
   
-  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns, onEdit, masterType]);
+  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns, onEdit, masterType, onDelete]);
 
   const table = useReactTable({
     data,

@@ -4,7 +4,7 @@ import { MasterForm } from '@/components/masters/master-form';
 import { PageHeader } from '@/components/page-header';
 
 export default function NewHeatTestPage() {
-  const masterType = 'heat-tests';
+  const masterType = 'heattestmaster';
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">

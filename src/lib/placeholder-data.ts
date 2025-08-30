@@ -78,7 +78,7 @@ export const genericMasterData: Record<string, GenericMaster[]> = {
     status: i % 2 === 0 ? 'Active' : 'Inactive',
     ...generateAuditFields(i),
   })),
-  'heat-tests': Array.from({ length: 16 }, (_, i) => ({
+  'heattestmaster': Array.from({ length: 16 }, (_, i) => ({
     id: `HT${String(i + 1).padStart(3, '0')}`,
     name: `Heat Test ${i + 1}`,
     code: `HT-${i + 1}`,

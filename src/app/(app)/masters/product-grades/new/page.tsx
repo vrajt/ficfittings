@@ -12,7 +12,6 @@ export default function NewProductGradePage() {
         title="New Product Grade"
         description="Fill in the details to create a new product grade."
       />
-      <MasterForm masterType={masterType} />
     </div>
   );
 }
