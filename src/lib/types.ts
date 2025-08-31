@@ -69,3 +69,26 @@ export type Certificate = BaseEntity & {
   customerName: string;
   status: 'Draft' | 'Issued';
 };
+export interface LotTestValue {
+  Id: number;
+  HeatNo: string;
+  LabName: string;
+  Lab_TC_No: string;
+  Lab_TC_Date: string;
+  ImpactTest: {
+    Temperature: number;
+    Size: string;
+    Value1: string;
+    Value2: string;
+    Value3: string;
+    AvgValue: string;
+  }[];
+  ChemicalComp: {
+    Element: string;
+    Value: number;
+  }[];
+  PhysicalProp: {
+    Property: string;
+    Value: string;
+  }[];
+}

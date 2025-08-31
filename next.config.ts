@@ -61,6 +61,10 @@ const nextConfig: NextConfig = {
         source: '/api/othertests/:path*',
         destination: 'http://localhost:5000/api/othertests/:path*',
       },
+     {
+        source: '/api/lot-test-values/:path*',
+        destination: 'http://localhost:5000/api/lot-test-values/:path*',
+      },
     ]
   },
 };

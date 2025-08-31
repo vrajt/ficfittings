@@ -48,6 +48,7 @@ export const navConfig: NavItem[] = [
       { title: 'Laboratories', href: '/masters/laboratories', icon: FlaskConical, masterType: 'laboratories' },
       { title: 'Heat Tests', href: '/masters/heat-tests', icon: Thermometer, masterType: 'heat-tests' },
       { title: 'Other Tests', href: '/masters/other-tests', icon: Beaker, masterType: 'other-tests' },
+       { title: 'Lot Test Values', href: '/masters/lot-test-values', icon: FlaskConical, masterType: 'lot-test-values' },
     ],
   },
   {
