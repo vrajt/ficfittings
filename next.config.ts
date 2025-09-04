@@ -65,6 +65,18 @@ const nextConfig: NextConfig = {
         source: '/api/lot-test-values/:path*',
         destination: 'http://localhost:5000/api/lot-test-values/:path*',
       },
+            {
+        source: '/api/tcmain/:path*',
+        destination: 'http://localhost:5000/api/tcmain/:path*',
+      },
+     {
+        source: '/api/tcitem/:path*',
+        destination: 'http://localhost:5000/api/tcitem/:path*',
+      },
+           {
+source: '/api/mtcstandards/:path*',
+        destination: 'http://localhost:5000/api/mtcstandards/:path*',
+      },
     ]
   },
 };

@@ -52,28 +52,28 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { DatePickerWithRange } from './ui/date-range-picker';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { generateCertificatePDF } from '@/lib/pdf-generator';
-import type { Certificate } from '@/lib/types';
 import { Checkbox } from './ui/checkbox';
 
 interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   isLoading?: boolean;
-  masterType?: string;
   onRefresh?: () => void;
   onEdit?: (data: TData) => void;
-  onDelete?: (id: string) => Promise<void>;
+  onDelete?: (data: TData) => Promise<void> | void;
+  onDownload?: (data: TData) => void;
+  onRowClick?: (row: TData) => void;
 }
 
-export function DataTable<TData extends { id: string; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft', date?: string }, TValue>({
+export function DataTable<TData extends { id?: string | number; PId?: number; status?: 'Active' | 'Inactive' | 'Issued' | 'Draft', date?: string, certificateNumber?: string }, TValue>({
   data,
   columns: propColumns,
   isLoading = false,
-  masterType,
   onRefresh,
   onEdit,
   onDelete,
+  onDownload,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -81,53 +81,33 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
-  const handleDownload = (rowData: TData) => {
-    generateCertificatePDF(rowData as Certificate);
-  };
-  
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (rowData: TData) => {
     if (onDelete) {
-        await onDelete(id);
-        onRefresh?.();
-        return;
-    }
-    if (masterType) {
-        try {
-            await axios.delete(`/api/${masterType}/${id}`);
-            toast({
-                title: "Record Deleted",
-                description: `The record with ID ${id} has been deleted.`,
-            });
-            onRefresh?.();
-        } catch (error) {
-            console.error(`Failed to delete record ${id}:`, error);
-            toast({
-                title: "Deletion Failed",
-                description: "Could not delete the record. Please try again.",
-                variant: 'destructive'
-            });
-        }
+        await onDelete(rowData);
     }
   };
 
   const handleDeleteSelected = async () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const idsToDelete = selectedRows.map(r => r.original.id);
+    const selectedRows = table.getFilteredSelectedRowModel().rows.map(r => r.original);
     
+    if (!onDelete) {
+        toast({
+            title: "Delete Handler Missing",
+            description: "No delete functionality has been configured for this table.",
+            variant: 'destructive'
+        });
+        return;
+    }
+
     try {
-        if (onDelete) {
-            await Promise.all(idsToDelete.map(id => onDelete(id)));
-        } else if (masterType) {
-            await Promise.all(idsToDelete.map(id => axios.delete(`/api/${masterType}/${id}`)));
-        } else {
-            throw new Error("No delete handler provided");
-        }
-        
+        await Promise.all(selectedRows.map(row => onDelete(row)));
         toast({
             title: "Bulk Deletion Successful",
             description: `${selectedRows.length} record(s) have been deleted.`,
         });
-        onRefresh?.();
+        if (onRefresh) {
+            onRefresh();
+        }
         table.resetRowSelection();
 
     } catch(error) {
@@ -139,128 +119,111 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
       });
     }
   };
-
-  const selectionColumn: ColumnDef<TData> = {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  };
-
-  const actionColumn: ColumnDef<TData> = {
-    id: 'actions',
-    header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => (
-      <div className="flex items-center justify-end gap-2">
-         {propColumns.some((c: any) => c.accessorKey === 'certificateNumber') && (
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleDownload(row.original)}>
-                        <FileDown className="h-4 w-4" />
-                        <span className="sr-only">Download</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Download PDF</p>
-                </TooltipContent>
-            </Tooltip>
-        )}
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => onEdit?.(row.original)}>
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>Edit record</p>
-            </TooltipContent>
-        </Tooltip>
-        <AlertDialog>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete</span>
-                </Button>
-              </AlertDialogTrigger>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>Delete record</p>
-            </TooltipContent>
-          </Tooltip>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete this record.
-                  </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleDelete(row.original.id)}>Delete</AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    ),
-    meta: {
-      sticky: true,
-    }
-  };
-
-  const statusColumn: ColumnDef<TData> = {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-      const status = row.original.status;
-      if (!status) return null;
-      let badgeVariant: "default" | "secondary" | "destructive" | "outline" | null | undefined = 'secondary';
-      let badgeClass = '';
-
-      switch (status) {
-        case 'Active':
-        case 'Issued':
-            badgeVariant = 'default';
-            badgeClass = 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-            break;
-        case 'Inactive':
-        case 'Draft':
-            badgeVariant = 'secondary';
-            badgeClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
-            break;
-      }
-
-      return (
-          <Badge variant={badgeVariant} className={cn('whitespace-nowrap', badgeClass)}>
-            {status}
-          </Badge>
-      );
-    },
-  };
   
-  const columns = React.useMemo(() => [selectionColumn, ...propColumns, statusColumn, actionColumn], [propColumns, onEdit, masterType, onDelete]);
+  const columns = React.useMemo<ColumnDef<TData, TValue>[]>(() => {
+    const actionColumn: ColumnDef<TData, TValue> = {
+      id: 'actions',
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+           {onDownload && row.original.certificateNumber && (
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDownload(row.original); }}>
+                          <FileDown className="h-4 w-4" />
+                          <span className="sr-only">Download</span>
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>Download PDF</p>
+                  </TooltipContent>
+              </Tooltip>
+          )}
+          {onEdit && (
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onEdit?.(row.original); }}>
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>Edit record</p>
+                  </TooltipContent>
+              </Tooltip>
+          )}
+          {onDelete && (
+              <AlertDialog>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                      </Button>
+                  </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>Delete record</p>
+                  </TooltipContent>
+              </Tooltip>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this record.
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(row.original)}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+              </AlertDialog>
+          )}
+        </div>
+      ),
+      meta: {
+        sticky: true,
+      }
+    };
+
+    const selectionColumn: ColumnDef<TData, TValue> = {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    };
+    
+    if (!onEdit && !onDelete && !onDownload) {
+      return propColumns;
+    }
+
+    return [selectionColumn, ...propColumns, actionColumn];
+  }, [propColumns, onEdit, onDelete, onDownload]);
+
 
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => (row.PId ?? row.id)?.toString(),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -390,7 +353,7 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
                     onDateChange={setDateRange}
                 />
             )}
-             {table.getFilteredSelectedRowModel().rows.length > 0 && (
+             {table.getFilteredSelectedRowModel().rows.length > 0 && onDelete && (
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" className="w-full sm:w-auto">
@@ -465,7 +428,12 @@ export function DataTable<TData extends { id: string; status?: 'Active' | 'Inact
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  <TableRow 
+                    key={row.id} 
+                    data-state={row.getIsSelected() && 'selected'}
+                    onClick={() => onRowClick?.(row.original)}
+                    className={onRowClick ? 'cursor-pointer' : ''}
+                    >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className={cell.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card' : ''}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

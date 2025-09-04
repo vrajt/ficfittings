@@ -18,6 +18,7 @@ import {
   Type,
   ToyBrick,
   AlertCircle,
+   FileBadge,
 } from 'lucide-react';
 import type { NavItem } from './types';
 
@@ -43,6 +44,7 @@ export const navConfig: NavItem[] = [
       { title: 'Product Grades', href: '/masters/product-grades', icon: Medal, masterType: 'product-grades' },
       { title: 'TC Remarks', href: '/masters/tc-remarks', icon: MessageSquareText, masterType: 'tc-remarks' },
       { title: 'Customers', href: '/masters/customers', icon: Users, masterType: 'customermaster' },
+        { title: 'Standard Master', href: '/masters/standards', icon: FileBadge, masterType: 'standards' },
       { title: 'Dimension Standards', href: '/masters/dimension-standards', icon: Ruler, masterType: 'dimension-standards' },
       { title: 'Start Materials', href: '/masters/start-materials', icon: Component, masterType: 'start-materials' },
       { title: 'Laboratories', href: '/masters/laboratories', icon: FlaskConical, masterType: 'laboratories' },

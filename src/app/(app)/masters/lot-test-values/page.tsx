@@ -45,7 +45,7 @@ const structureLotData = (records: any[], lotNo: string): LotTestValue => {
   records.forEach(rec => {
     switch (rec.Parm_Type) {
       case 'CC':
-        structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueN });
+        structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueC });
         break;
       case 'PP':
         structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
@@ -118,7 +118,7 @@ export default function LotTestValuesPage() {
 
   const handleLotSelect = async (lotNo: string) => {
     if (!lotNo) return;
-    setSelectedLot(lotNo);
+    setSelectedLot(lotNo);-
     setIsLoadingDetails(true);
     setLotData(null);
     try {

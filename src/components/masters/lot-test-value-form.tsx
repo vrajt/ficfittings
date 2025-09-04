@@ -38,7 +38,7 @@ const formSchema = z.object({
   })),
   ChemicalComp: z.array(z.object({
     Element: z.string().min(1, 'Element name is required.'),
-    Value: z.preprocess((val) => val === '' ? null : Number(val), z.number().nullable()),
+    Value: z.string().optional(),
   })),
   PhysicalProp: z.array(z.object({
     Property: z.string(),
@@ -52,6 +52,8 @@ interface LotTestValueFormProps {
 }
 
 const physicalProperties = ['Y.S Mpa', 'U.T.S Mpa', 'Elongation %', 'RA %', 'Hardness BHN'];
+const standardChemicalElements = ['C %', 'Mn %', 'Si %', 'S %', 'P %', 'Cr %', 'Ni %', 'Mo %', 'Cu %', 'V %', 'CE %'];
+
 
 export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -83,40 +85,48 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
   }, []);
 
   React.useEffect(() => {
-    // Function to merge initial data with the master lists
     const mergeData = (initial: LotTestValue) => {
-      const physicalData = physicalProperties.map(prop => {
-        const found = initial.PhysicalProp?.find(p => p.Property === prop);
-        return found || { Property: prop, Value: '' };
-      });
+        const physicalData = physicalProperties.map(prop => {
+            const found = initial.PhysicalProp?.find(p => p.Property === prop);
+            return found || { Property: prop, Value: '' };
+        });
 
-      const impactData = initial.ImpactTest?.length > 0 
-        ? initial.ImpactTest 
-        : [{ Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' }];
-      
-      const chemicalData = initial.ChemicalComp?.length > 0
-        ? initial.ChemicalComp
-        : [{ Element: '', Value: null }];
+        // Start with standard elements
+        const chemicalDataMap = new Map<string, { Element: string; Value: string }>();
+        standardChemicalElements.forEach(elem => {
+            chemicalDataMap.set(elem, { Element: elem, Value: '' });
+        });
 
-      return {
-        ...initial,
-        ChemicalComp: chemicalData,
-        PhysicalProp: physicalData,
-        ImpactTest: impactData,
-      };
+        // Override with initial data
+        initial.ChemicalComp?.forEach(item => {
+            chemicalDataMap.set(item.Element, { ...item, Value: item.Value?.toString() ?? '' });
+        });
+        
+        const chemicalData = Array.from(chemicalDataMap.values());
+
+        const impactData = initial.ImpactTest?.length > 0 
+            ? initial.ImpactTest 
+            : [{ Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' }];
+        
+        return {
+            ...initial,
+            ChemicalComp: chemicalData,
+            PhysicalProp: physicalData,
+            ImpactTest: impactData,
+        };
     };
     
     form.reset(mergeData(initialData));
-  }, [initialData, form]);
+}, [initialData, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
     const flatData = [];
     
-    // Flatten Chemical Composition
     values.ChemicalComp.forEach(item => {
-        if (item.Value !== null) {
+        if (item.Value) {
             flatData.push({
                 HeatNo: values.HeatNo,
                 Lab_Name: values.LabName,
@@ -124,12 +134,12 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
                 Lab_TC_Date: values.Lab_TC_Date,
                 Parm_Type: 'CC',
                 Parm_Name: item.Element,
-                Test_ValueN: item.Value,
+                Test_ValueC: item.Value,
+                Test_ValueN: 0 // Set to 0 as it's not used but might be required by DB
             });
         }
     });
 
-    // Flatten Physical Properties
     values.PhysicalProp.forEach(item => {
         if (item.Value) {
              flatData.push({
@@ -144,7 +154,6 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
         }
     });
 
-    // Flatten Impact Tests
     values.ImpactTest.forEach(item => {
         if (item.Temperature !== null || item.Size || item.AvgValue) {
              flatData.push({
@@ -164,12 +173,6 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
     });
     
     try {
-        // Since we are replacing all records for a lot, we can use a single endpoint
-        // This assumes your backend can handle a bulk update/replace operation.
-        // A common pattern is a POST to a specific lot's endpoint.
-        // For now, we will assume we delete all old and post all new.
-
-        // Delete existing records for the lot
         const existingRecordsResponse = await axios.get('/api/lot-test-values');
         const existingRecordIds = existingRecordsResponse.data
             .filter((rec: any) => rec.HeatNo === values.HeatNo)
@@ -179,7 +182,6 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
           await Promise.all(existingRecordIds.map((id: number) => axios.delete(`/api/lot-test-values/${id}`)));
         }
 
-        // Post new records
         if (flatData.length > 0) {
           await Promise.all(flatData.map(record => axios.post('/api/lot-test-values', record)));
         }
@@ -313,7 +315,12 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
-                    <CardHeader><CardTitle>Chemical Composition (%)</CardTitle></CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Chemical Composition (%)</CardTitle>
+                        <Button type="button" size="sm" variant="outline" onClick={() => appendChemical({ Element: '', Value: '' })}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Element
+                        </Button>
+                    </CardHeader>
                     <CardContent>
                     <Table>
                         <TableHeader>
@@ -327,21 +334,18 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
                         {chemicalFields.map((field, index) => (
                             <TableRow key={field.id}>
                                 <TableCell>
-                                  <Input placeholder="e.g., C %" {...form.register(`ChemicalComp.${index}.Element`)} />
+                                    <Input {...form.register(`ChemicalComp.${index}.Element`)} placeholder="e.g. Fe %" />
                                 </TableCell>
-                                <TableCell><Input type="number" step="0.001" {...form.register(`ChemicalComp.${index}.Value`)} /></TableCell>
+                                <TableCell><Input type="text" {...form.register(`ChemicalComp.${index}.Value`)} /></TableCell>
                                 <TableCell>
-                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeChemical(index)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeChemical(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
                     </Table>
-                    <Button type="button" variant="outline" size="sm" onClick={() => appendChemical({ Element: '', Value: null })} className="mt-2">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Row
-                    </Button>
                     </CardContent>
                 </Card>
                 <Card>

@@ -7,13 +7,15 @@ export type MasterType =
   | 'grades'
   | 'product-grades'
   | 'tc-remarks'
-  | 'tcremarksfix'
+  | 'tc-remarks-fix'
   | 'customers'
   | 'dimension-standards'
+  | 'standards'
   | 'start-materials'
   | 'laboratories'
-  | 'heattestmaster'
-  | 'other-tests';
+  | 'heat-tests'
+  | 'other-tests'
+  | 'lot-test-values';
 
 export type PageType = 'alerts';
 
@@ -29,10 +31,10 @@ export type NavItem = {
 
 interface BaseEntity {
   id: string;
-  createdBy: string;
-  date: string;
-  updatedBy: string;
-  updatedAt: string;
+  createdBy?: string;
+  date?: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 export type GenericMaster = BaseEntity & {
@@ -51,7 +53,7 @@ export type GenericMaster = BaseEntity & {
   email1?: string;
   isBlocked?: boolean;
   // Fields for TC Remarks
-  tcChoice?: string;
+  tcChoice?: string | boolean;
 };
 
 export type Customer = BaseEntity & {
@@ -69,6 +71,7 @@ export type Certificate = BaseEntity & {
   customerName: string;
   status: 'Draft' | 'Issued';
 };
+
 export interface LotTestValue {
   Id: number;
   HeatNo: string;
@@ -76,7 +79,7 @@ export interface LotTestValue {
   Lab_TC_No: string;
   Lab_TC_Date: string;
   ImpactTest: {
-    Temperature: number;
+    Temperature: number | null;
     Size: string;
     Value1: string;
     Value2: string;
@@ -85,10 +88,74 @@ export interface LotTestValue {
   }[];
   ChemicalComp: {
     Element: string;
-    Value: number;
+    Value: number | null | string;
   }[];
   PhysicalProp: {
     Property: string;
     Value: string;
   }[];
+}
+
+export interface TcItem {
+  Id: number; // This is the TcMain ID
+  ApsFullDoc: string;
+  PId: number; // This is the actual unique ID for the TcItem
+  Po_Inv_PId?: number;
+  HeatNo: string;
+  ProductName: string;
+  Qty1: number;
+  Qty1Unit: string;
+  GradeName: string;
+  Specification: string;
+  CreatedDate: string;
+  UpdateDate: string;
+}
+
+export interface TcHeatTest {
+    Id: number; // TcMain ID
+    PId: number; // Unique ID for this record
+    ApsFullDoc: string;
+    Heat_Code: string;
+    Heat_Desc: string;
+}
+
+export interface TcOtherTest {
+    Id: number; // TcMain ID
+    PId: number; // Unique ID for this record
+    ApsFullDoc: string;
+    Test_Code: string;
+    Test_Desc: string;
+    Test_Result: string;
+}
+
+export interface TcRemark {
+    PId: number; // Unique temporary ID for React key
+    Id: number; // Master remark ID
+    TcTerms: string;
+    TcChoice: boolean;
+}
+
+
+export interface TcMain {
+    Id: number;
+    ApsFullDoc: string;
+    DocDate: string;
+    PoNo: string;
+    PoDate: string;
+    InvNo: string;
+    InvDate: string;
+    AccCode: string;
+    AccName: string;
+    Address1: string;
+    SM_Id: string;
+    SM_RM_Name: string; // Start Material
+    items: TcItem[];
+    heatTreatDetails: TcHeatTest[];
+    otherTestDetails: TcOtherTest[];
+    remarks: TcRemark[];
+    StandardName?: string;
+    DStd_Type?: string;
+    GradeName?: string;
+    BranchId?: number;
+    [key: string]: any; // Allow other properties
 }
