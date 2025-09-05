@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { LabMasterForm } from '@/components/masters/lab-master-form';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function LaboratoriesPage() {
   const masterType = 'laboratories';
@@ -96,6 +97,25 @@ export default function LaboratoriesPage() {
     fetchData();
   };
 
+  const handleDelete = async (record: GenericMaster) => {
+    const id = record.id;
+    try {
+      await axios.delete(`/api/laboratories/${id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The record with ID ${id} has been deleted.`
+      });
+      fetchData();
+    } catch (error) {
+      console.error(`Failed to delete record ${id}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the record. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
@@ -111,6 +131,7 @@ export default function LaboratoriesPage() {
         masterType={masterType}
         onRefresh={fetchData}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">

@@ -1,4 +1,3 @@
-
 'use client';
 import { DataTable } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { HeatTestForm } from '@/components/masters/heat-tests-form';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function HeatTestsPage() {
   const masterType = 'heattestmaster';
@@ -98,6 +98,25 @@ export default function HeatTestsPage() {
     fetchData();
   };
 
+  const handleDelete = async (record: GenericMaster) => {
+    const id = record.id;
+    try {
+      await axios.delete(`/api/${masterType}/${id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The record with ID ${id} has been deleted.`
+      });
+      fetchData();
+    } catch (error) {
+      console.error(`Failed to delete record ${id}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the record. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
@@ -113,6 +132,7 @@ export default function HeatTestsPage() {
         masterType={masterType}
         onRefresh={fetchData}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">

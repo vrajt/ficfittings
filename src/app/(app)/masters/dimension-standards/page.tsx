@@ -1,4 +1,3 @@
-
 'use client';
 import { DataTable } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
@@ -91,7 +90,8 @@ export default function DimensionStandardsPage() {
     fetchData();
   };
   
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (record: GenericMaster) => {
+    const id = record.id;
     try {
       await axios.delete(`/api/dimension-standards/${id}`);
       toast({
@@ -125,7 +125,7 @@ export default function DimensionStandardsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingData ? 'Edit Dimension Standard' : 'Add New Dimension Standard'}</DialogTitle>

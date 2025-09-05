@@ -1,4 +1,3 @@
-
 'use client';
 import { DataTable } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
@@ -15,7 +14,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { ProductGradeForm } from '@/components/masters/product-grade-form';
-import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function ProductGradesPage() {
   const [data, setData] = React.useState<GenericMaster[]>([]);
@@ -41,7 +40,7 @@ export default function ProductGradesPage() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/product-grades');
+      const response = await axios.get('/api/productgrades');
       
       const formattedData = response.data.map((item: any) => {
         const source = item.dataValues || item;
@@ -59,6 +58,11 @@ export default function ProductGradesPage() {
       setData(formattedData);
     } catch (error) {
       console.error("Failed to fetch product grades:", error);
+      toast({
+        title: "Fetch Failed",
+        description: "Could not fetch product grades. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +86,24 @@ export default function ProductGradesPage() {
     setIsDialogOpen(false);
     fetchData();
   };
+  
+  const handleDelete = async (record: GenericMaster) => {
+    try {
+      await axios.delete(`/api/productgrades/${record.id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The record with ID ${record.id} has been deleted.`
+      });
+      fetchData();
+    } catch (error) {
+      console.error(`Failed to delete record ${record.id}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the record. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
@@ -95,9 +117,9 @@ export default function ProductGradesPage() {
         columns={columns} 
         data={data} 
         isLoading={isLoading} 
-        masterType="product-grades"
         onRefresh={fetchData}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

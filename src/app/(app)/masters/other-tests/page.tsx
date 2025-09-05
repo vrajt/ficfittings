@@ -92,7 +92,8 @@ export default function OtherTestsPage() {
     fetchData();
   };
   
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (record: GenericMaster) => {
+    const id = record.id;
     try {
       await axios.delete(`/api/othertests/${id}`);
       toast({
@@ -126,7 +127,7 @@ export default function OtherTestsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{editingData ? 'Edit Other Test' : 'Add New Other Test'}</DialogTitle>

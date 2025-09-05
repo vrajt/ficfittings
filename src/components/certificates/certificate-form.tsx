@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -32,7 +31,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { usePathname, useRouter } from "next/navigation";
-import { FileDown, Loader2, Trash2 } from "lucide-react";
+import { FileDown, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useTabs } from "../tabs/tab-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import type { TcMain, Customer, GenericMaster, TcItem, LotTestValue, TcHeatTest, TcOtherTest, TcRemark } from "@/lib/types";
@@ -74,6 +73,9 @@ interface CertificateFormProps {
 
 type StructuredLotData = Omit<LotTestValue, 'Id' | 'HeatNo' | 'Lab_TC_Date'>;
 
+// A simple counter to generate unique IDs for new items.
+let pidCounter = Date.now();
+
 const structureLotData = (records: any[]): StructuredLotData => {
   const baseRecord = records[0] || {};
   
@@ -95,7 +97,7 @@ const structureLotData = (records: any[]): StructuredLotData => {
         structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
         break;
       case 'IT':
-        const key = `${rec.ITJ_Temp || 'N/A'}-${rec.ITJ_Size || 'N/A'}`;
+        const key = `\${rec.ITJ_Temp || 'N/A'}-\${rec.ITJ_Size || 'N/A'}`;
         if (!impactTests.has(key)) {
             impactTests.set(key, {
                 Temperature: rec.ITJ_Temp,
@@ -132,6 +134,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   const [heatTests, setHeatTests] = React.useState<TcHeatTest[]>([]);
   const [otherTests, setOtherTests] = React.useState<TcOtherTest[]>([]);
   const [remarks, setRemarks] = React.useState<TcRemark[]>([]);
+  const [customRemark, setCustomRemark] = React.useState('');
 
   const [isItemDialogOpen, setIsItemDialogOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<TcItem | null>(null);
@@ -176,9 +179,10 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   const branchId = form.watch("BranchId");
 
   React.useEffect(() => {
-    if (branchId === 1) {
+    const numericBranchId = parseInt(branchId as unknown as string, 10);
+    if (numericBranchId === 1) {
         form.setValue("STCode", "NIMC");
-    } else if (branchId === 2) {
+    } else if (numericBranchId === 2) {
         form.setValue("STCode", "FIC");
     }
   }, [branchId, form]);
@@ -201,7 +205,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                 const recordsForLot = allLotRecords.filter((rec: any) => rec.HeatNo === heatNo);
                 if (recordsForLot.length > 0) {
                     const structured = structureLotData(recordsForLot);
-                    detailsMap.set(heatNo, structured);
+                    detailsMap.set(heatNo as string, structured);
                 }
             }
             setHeatNoDetailsMap(detailsMap);
@@ -222,14 +226,12 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
         try {
             setIsDropdownDataLoading(true);
             const [customerRes, materialRes, gradeRes, dimStdRes, mtcStdRes] = await Promise.all([
-            
                 axios.get("/api/customers"),
                 axios.get("/api/start-materials"),
                 axios.get("/api/productgrades"),
                 axios.get("/api/dimension-standards"),
                 axios.get("/api/mtcstandards"),
             ]);
-              console.log('materialRes::: ', materialRes);
             
             const customerData = customerRes.data.map((item: any) => {
                  const source = item.dataValues || item;
@@ -241,10 +243,10 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
             });
     
             setCustomers(customerData);
-            setStartMaterials(materialRes.data.map((item:any) => ({ id: item.Id.toString(), name: item.SM_RM_Name })));
+ setStartMaterials(materialRes.data.map((item:any) => ({ id: item.Id.toString(), name: item.SM_RM_Name })));
             setGrades(gradeRes.data.map((item: any) => ({ id: item.Id.toString(), name: item.GradeName })));
             setDimensionStandards(dimStdRes.data.map((item: any) => ({ id: item.Id.toString(), name: item.DStd_Type })));
-            setMtcStandards(mtcStdRes.data);
+            setMtcStandards(mtcStdRes.data.filter((item: any) => item && item.Std_Id != null));
     
         } catch (error) {
              toast({ title: "Error fetching master data", description: "Could not load required master data.", variant: "destructive" });
@@ -279,7 +281,8 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
         try {
           const response = await axios.get('/api/tcremarksfix');
           const masterRemarks = response.data.map((r: any) => ({ 
-            PId: Date.now() + r.Id, 
+            _tempId: pidCounter++,
+            PId: r.Id,
             Id: r.Id, 
             TcTerms: r.TcTerms, 
             TcChoice: r.TcChoice 
@@ -334,16 +337,50 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
     }
   }
 
+  const handleGeneratePdf = () => {
+    if (!initialData) return;
+    const currentFormData = form.getValues();
+    const dataForPdf = {
+      ...initialData,
+      ...currentFormData,
+      items: items,
+      heatTreatDetails: heatTests,
+      otherTestDetails: otherTests,
+      remarks: remarks,
+    };
+    generateCertificatePDF(dataForPdf as TcMain);
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
+    
+    // Create a clean version of remarks without the temporary ID
+    const cleanRemarks = remarks.map(r => {
+        const { _tempId, ...rest } = r;
+        return rest;
+    });
+
+    const cleanItems = items.map(i => {
+        const { _tempId, ...rest } = i as any;
+        return rest;
+    });
+     const cleanHeatTests = heatTests.map(i => {
+        const { _tempId, ...rest } = i as any;
+        return rest;
+    });
+     const cleanOtherTests = otherTests.map(i => {
+        const { _tempId, ...rest } = i as any;
+        return rest;
+    });
+
     try {
         if (isEditMode && initialData) {
-             const payload = {
+            const payload = {
                 tcMainData: values,
-                itemsData: items,
-                heatTests: heatTests,
-                otherTests: otherTests,
-                remarksData: remarks,
+                itemsData: cleanItems,
+                heatTests: cleanHeatTests,
+                otherTests: cleanOtherTests,
+                remarksData: cleanRemarks,
             };
             await axios.put(`/api/tcmain/${initialData.Id}`, payload);
             toast({ title: "Certificate Updated", description: "The test certificate has been updated successfully." });
@@ -351,7 +388,13 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
               onSave();
             }
         } else {
-            const payload = { ...values, items, heatTests, otherTests, remarks };
+            const payload = { 
+                ...values, 
+                items: cleanItems, 
+                heatTests: cleanHeatTests,
+                otherTests: cleanOtherTests,
+                remarks: cleanRemarks
+            };
             const response = await axios.post(`/api/tcmain`, payload);
             toast({ title: "Certificate Saved", description: "The new test certificate has been saved successfully." });
             const newId = response.data.TcMain.Id;
@@ -381,23 +424,25 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   }
 
   const handleDeleteItem = (row: TcItem) => {
-    const idToDelete = row.PId;
-    setItems(prev => prev.filter(item => item.PId !== idToDelete));
+    const idToDelete = (row as any)._tempId || row.PId;
+    setItems(prev => prev.filter(item => ((item as any)._tempId || item.PId) !== idToDelete));
     toast({ title: "Item Removed", description: "The product item has been removed from the list." });
   }
   
   const handleSaveItem = (itemToSave: TcItem) => {
-      setItems(prev => {
-          const existingIndex = prev.findIndex(i => i.PId === itemToSave.PId);
-          if (existingIndex > -1) {
-              const newItems = [...prev];
-              newItems[existingIndex] = itemToSave;
-              return newItems;
-          } else {
-              return [...prev, { ...itemToSave, PId: Date.now() }];
-          }
-      });
-      setIsItemDialogOpen(false);
+    setItems(prev => {
+        const key = (itemToSave as any)._tempId || itemToSave.PId;
+        const existingIndex = prev.findIndex(i => ((i as any)._tempId || i.PId) === key);
+        
+        if (existingIndex > -1) {
+            const newItems = [...prev];
+            newItems[existingIndex] = itemToSave;
+            return newItems;
+        } else {
+            return [...prev, { ...itemToSave, _tempId: pidCounter++ }];
+        }
+    });
+    setIsItemDialogOpen(false);
   }
 
 
@@ -413,28 +458,27 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   }
 
   const handleDeleteHeatTest = (row: TcHeatTest) => {
-      const idToDelete = row.PId;
-      setHeatTests(prev => prev.filter(t => t.PId !== idToDelete));
+      const idToDelete = (row as any)._tempId || row.PId;
+      setHeatTests(prev => prev.filter(t => ((t as any)._tempId || t.PId) !== idToDelete));
   }
 
-  const handleSaveHeatTest = (test: TcHeatTest) => {
+  const handleSaveHeatTest = (testToSave: Omit<TcHeatTest, 'ApsFullDoc' | 'Id' | 'PId'>) => {
     setHeatTests(prev => {
-      const existingIndex = prev.findIndex(t => t.PId === test.PId);
-      if (existingIndex > -1) {
-        const newTests = [...prev];
-        newTests[existingIndex] = test;
-        return newTests;
+      if (editingHeatTest) {
+        const key = (editingHeatTest as any)._tempId || editingHeatTest.PId;
+        return prev.map(t => (((t as any)._tempId || t.PId) === key) ? { ...t, ...testToSave } : t);
       } else {
-        const newTest = { ...test, PId: Date.now() };
-        if (isEditMode && initialData) {
-          (newTest as any).Id = initialData.Id;
-          (newTest as any).ApsFullDoc = initialData.ApsFullDoc;
-        }
+        const newTest: TcHeatTest = {
+          ...(testToSave as TcHeatTest),
+          _tempId: pidCounter++,
+        };
         return [...prev, newTest];
       }
     });
     setIsHeatTestDialogOpen(false);
+    setEditingHeatTest(null);
   }
+
 
   // Other Test Handlers
   const handleAddNewOtherTest = () => {
@@ -448,41 +492,69 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   }
 
   const handleDeleteOtherTest = (row: TcOtherTest) => {
-      const idToDelete = row.PId;
-      setOtherTests(prev => prev.filter(t => t.PId !== idToDelete));
+      const idToDelete = (row as any)._tempId || row.PId;
+      setOtherTests(prev => prev.filter(t => ((t as any)._tempId || t.PId) !== idToDelete));
   }
   
-  const handleSaveOtherTest = (test: TcOtherTest) => {
-      setOtherTests(prev => {
-          const existingIndex = prev.findIndex(t => t.PId === test.PId);
-          if (existingIndex > -1) {
-              const newTests = [...prev];
-              newTests[existingIndex] = test;
-              return newTests;
-          } else {
-            const newTest = { ...test, PId: Date.now() };
-            if (isEditMode && initialData) {
-                (newTest as any).Id = initialData.Id;
-                (newTest as any).ApsFullDoc = initialData.ApsFullDoc;
-             }
-            return [...prev, newTest];
-          }
-      });
+  const handleSaveOtherTest = (testToSave: Omit<TcOtherTest, 'ApsFullDoc' | 'Id' | 'PId'>) => {
+    setOtherTests(prev => {
+      if (editingOtherTest) {
+        const key = (editingOtherTest as any)._tempId || editingOtherTest.PId;
+        return prev.map(t => (((t as any)._tempId || t.PId) === key) ? { ...t, ...testToSave } : t);
+      } else {
+        const newTest: TcOtherTest = {
+           ...(testToSave as TcOtherTest),
+          _tempId: pidCounter++,
+        };
+        return [...prev, newTest];
+      }
+    });
     setIsOtherTestDialogOpen(false);
+    setEditingOtherTest(null);
   }
   
   // Remark Handlers
-  const handleDeleteRemark = (pId: number) => {
-    setRemarks(prev => prev.filter(r => r.PId !== pId));
+  const handleAddCustomRemark = () => {
+    if (customRemark.trim()) {
+      const newRemark: TcRemark = {
+        _tempId: pidCounter++,
+        Id: 0,
+        TcTerms: customRemark.trim(),
+        TcChoice: true,
+      };
+      setRemarks(prev => [...prev, newRemark]);
+      setCustomRemark('');
+    }
+  }
+
+  const handleDeleteRemark = (idToDelete: number) => {
+    setRemarks(prev => prev.filter(r => (r._tempId || r.PId) !== idToDelete));
   }
 
   const heatDetailsArray = Array.from(heatNoDetailsMap.entries());
-  const chemicalColumns = heatDetailsArray.length > 0 ? Array.from(new Set(heatDetailsArray.flatMap(([, details]) => details.ChemicalComp.map(cc => cc.Element)))) : [];
-  const physicalColumns = heatDetailsArray.length > 0 ? Array.from(new Set(heatDetailsArray.flatMap(([, details]) => details.PhysicalProp.map(pp => pp.Property)))) : [];
+  
+  const allChemElements = Array.from(new Set(heatDetailsArray.flatMap(([, details]) => details.ChemicalComp.map(cc => cc.Element))))
+                             .filter(element => heatDetailsArray.some(lot => {
+                                const [, details] = lot;
+                                const chem = details.ChemicalComp.find(cc => cc.Element === element);
+                                return chem && chem.Value;
+                              }));
+
+  const allPhysProps = Array.from(new Set(heatDetailsArray.flatMap(([, details]) => details.PhysicalProp.map(pp => pp.Property))))
+                            .filter(prop => heatDetailsArray.some(lot => {
+                               const [, details] = lot;
+                               const phys = details.PhysicalProp.find(pp => pp.Property === prop);
+                               return phys && phys.Value;
+                            }));
 
 
   const itemColumns = [
-    { accessorKey: 'PId', header: 'Sr. No' },
+    { 
+      accessorKey: '_tempId', 
+      header: 'Sr. No',
+      cell: ({ row }: any) => row.index + 1 
+    },
+    { accessorKey: 'PoNo', header: 'PO No.'},
     { accessorKey: 'ProductName', header: 'Item Description' },
     { accessorKey: 'Specification', header: 'Size' },
     { accessorKey: 'HeatNo', header: 'Heat No / Lot No' },
@@ -525,7 +597,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                 {initialData && (
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => generateCertificatePDF(initialData as any)}>
+                        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleGeneratePdf}>
                             <FileDown className="mr-2 h-4 w-4" /> Export PDF
                         </Button>
                     </TooltipTrigger>
@@ -568,7 +640,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>TC Standard Type (Header)</FormLabel>
-                                    <Select onValueChange={(value) => { field.onChange(value); handleStandardChange(value); }} value={field.value}>
+                                    <Select onValueChange={(value) => { field.onChange(value); handleStandardChange(value); }} value={field.value || ''}>
                                         <FormControl>
                                             <SelectTrigger><SelectValue placeholder="Select a standard" /></SelectTrigger>
                                         </FormControl>
@@ -616,7 +688,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                             <FormField control={form.control} name="AccCode" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Customer Name</FormLabel>
-                                    <Select onValueChange={(value) => { field.onChange(value); handleCustomerChange(value); }} value={field.value}>
+                                    <Select onValueChange={(value) => { field.onChange(value); handleCustomerChange(value); }} value={field.value || ''}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a customer" /></SelectTrigger></FormControl>
                                         <SelectContent>
                                             {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -735,16 +807,16 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Heat No</TableHead>
-                                        {chemicalColumns.map(col => <TableHead key={col}>{col}</TableHead>)}
+                                        {allChemElements.map((col, index) => <TableHead key={`\${col}-\${index}`}>{col}</TableHead>)}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {heatDetailsArray.map(([heatNo, details]) => (
                                         <TableRow key={heatNo}>
                                             <TableCell>{heatNo}</TableCell>
-                                            {chemicalColumns.map(col => {
+                                            {allChemElements.map((col, index) => {
                                                 const item = details.ChemicalComp.find(cc => cc.Element === col);
-                                                return <TableCell key={`${heatNo}-${col}`}>{item?.Value ?? '-'}</TableCell>;
+                                                return <TableCell key={`\${heatNo}-\${col}-\${index}`}>{item?.Value ?? '-'}</TableCell>;
                                             })}
                                         </TableRow>
                                     ))}
@@ -759,16 +831,16 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Heat No</TableHead>
-                                        {physicalColumns.map(col => <TableHead key={col}>{col}</TableHead>)}
+                                        {allPhysProps.map((col, index) => <TableHead key={`\${col}-\${index}`}>{col}</TableHead>)}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                      {heatDetailsArray.map(([heatNo, details]) => (
                                         <TableRow key={heatNo}>
                                             <TableCell>{heatNo}</TableCell>
-                                            {physicalColumns.map(col => {
-                                                const item = details.PhysicalProp.find(pp => pp.Property === col);
-                                                return <TableCell key={`${heatNo}-${col}`}>{item?.Value ?? '-'}</TableCell>;
+                                            {allPhysProps.map((prop, index) => {
+                                                const item = details.PhysicalProp.find(pp => pp.Property === prop);
+                                                return <TableCell key={`\${heatNo}-\${prop}-\${index}`}>{item?.Value ?? '-'}</TableCell>;
                                             })}
                                         </TableRow>
                                     ))}
@@ -816,9 +888,9 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                     <CardContent>
                         <div className="space-y-2">
                             {remarks.map((remark, index) => (
-                                <div key={remark.PId} className="flex items-center justify-between gap-2 p-2 border rounded-md">
+                                <div key={remark._tempId || remark.PId} className="flex items-center justify-between gap-2 p-2 border rounded-md">
                                     <p className="text-sm flex-1">{index + 1}. {remark.TcTerms}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteRemark(remark.PId)}>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteRemark(remark._tempId || remark.PId)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </div>
@@ -826,6 +898,22 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                             {remarks.length === 0 && (
                                 <p className="text-sm text-muted-foreground text-center p-4">No remarks added.</p>
                             )}
+                        </div>
+                        <div className="mt-4 pt-4 border-t">
+                            <h4 className="text-sm font-medium mb-2">Add Custom Remark</h4>
+                            <div className="flex items-start gap-2">
+                                <Textarea
+                                    value={customRemark}
+                                    onChange={(e) => setCustomRemark(e.target.value)}
+                                    placeholder="Type your custom remark here..."
+                                    rows={3}
+                                    className="flex-1"
+                                />
+                                <Button type="button" onClick={handleAddCustomRemark}>
+                                    <PlusCircle className="h-4 w-4 mr-2" />
+                                    Add Remark
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -849,9 +937,10 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
        <OtherTestFormDialog
         isOpen={isOtherTestDialogOpen}
         setIsOpen={setIsOtherTestDialogOpen}
-        initialData={editingOtherTest}
+        initialData={editingOtherTest}  
         onSave={handleSaveOtherTest}
        />
     </Form>
   );
 }
+

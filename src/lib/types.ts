@@ -97,39 +97,41 @@ export interface LotTestValue {
 }
 
 export interface TcItem {
-  Id: number; // This is the TcMain ID
-  ApsFullDoc: string;
+  Id?: number; // This is the TcMain ID
+  ApsFullDoc?: string;
   PId: number; // This is the actual unique ID for the TcItem
   Po_Inv_PId?: number;
   HeatNo: string;
   ProductName: string;
   Qty1: number;
   Qty1Unit: string;
-  GradeName: string;
+  PoNo?: string;
+  GradeName?: string;
   Specification: string;
-  CreatedDate: string;
-  UpdateDate: string;
+  CreatedDate?: string;
+  UpdateDate?: string;
 }
 
 export interface TcHeatTest {
-    Id: number; // TcMain ID
+    Id?: number; // TcMain ID
     PId: number; // Unique ID for this record
-    ApsFullDoc: string;
+    ApsFullDoc?: string;
     Heat_Code: string;
     Heat_Desc: string;
 }
 
 export interface TcOtherTest {
-    Id: number; // TcMain ID
+    Id?: number; // TcMain ID
     PId: number; // Unique ID for this record
-    ApsFullDoc: string;
+    ApsFullDoc?: string;
     Test_Code: string;
     Test_Desc: string;
     Test_Result: string;
 }
 
 export interface TcRemark {
-    PId: number; // Unique temporary ID for React key
+    _tempId?: number; // Client-side only temporary id
+    PId?: number; // Unique temporary ID for React key
     Id: number; // Master remark ID
     TcTerms: string;
     TcChoice: boolean;
@@ -157,5 +159,6 @@ export interface TcMain {
     DStd_Type?: string;
     GradeName?: string;
     BranchId?: number;
+    Std_Id?: string;
     [key: string]: any; // Allow other properties
 }

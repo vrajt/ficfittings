@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,7 +34,7 @@ interface OtherTestFormDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   initialData: TcOtherTest | null;
-  onSave: (item: TcOtherTest) => void;
+  onSave: (item: Omit<TcOtherTest, 'ApsFullDoc' | 'Id'>) => void;
 }
 
 const formSchema = z.object({
@@ -43,6 +42,7 @@ const formSchema = z.object({
   Test_Desc: z.string().min(1, 'Test description is required'),
   Test_Result: z.string().min(1, 'Test result is required'),
   PId: z.number().optional(),
+  Id: z.number().optional(),
 });
 
 type OtherTestMasterRecord = {
@@ -101,11 +101,20 @@ export function OtherTestFormDialog({ isOpen, setIsOpen, initialData, onSave }: 
   }, [isOpen, initialData, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const dataToSave = {
-      ...values,
-      PId: initialData?.PId,
-    };
+    const dataToSave: Partial<TcOtherTest> = { ...values };
+
+    if (isEditMode && initialData) {
+        // Keep the PId for updates
+        dataToSave.PId = initialData.PId;
+    } else {
+        // This is a new record. The backend expects NO PId.
+        // A temporary PId will be assigned in the parent component for the key.
+        delete dataToSave.PId;
+        delete (dataToSave as any).Id;
+    }
+    
     onSave(dataToSave as TcOtherTest);
+    setIsOpen(false);
   }
 
   return (

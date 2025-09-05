@@ -80,6 +80,7 @@ const getLotDetails = (allLotData: any[], heatNo: string): LotTestValue | null =
     }
 };
 
+
 export const generateCertificatePDF = async (certificate: TcMain) => {
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -87,293 +88,246 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     format: 'a4',
   }) as jsPDFWithAutoTable;
 
-  // --- Fetch All Lot Details Concurrently ---
   const allLotData = await fetchAllLotDetails();
   const uniqueHeatNos = [...new Set(certificate.items.map(item => item.HeatNo).filter(Boolean))];
   const lotDetailsArray = uniqueHeatNos.map(heatNo => getLotDetails(allLotData, heatNo as string)).filter(Boolean) as LotTestValue[];
+  
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  
+  const leftMargin = 10;
+  const rightMargin = 10;
+  const topHeaderMargin = 15;
+  const contentStartY = 37; // 3.7 cm
+  const footerEndY = pageHeight - 24; // 2.4 cm
+  const contentWidth = pageWidth - leftMargin - rightMargin;
 
-
-  // --- PDF Generation ---
-  const page_width = doc.internal.pageSize.getWidth();
-  const margin = 10;
-  const contentStartY = 37; // 3.7cm from top
-  const footerStartY = doc.internal.pageSize.getHeight() - 24; // 2.4cm from bottom
-
-
-  const tableStyles = {
-    fontSize: 7,
-    cellPadding: 0.8,
-    lineWidth: 0.2, // Bolder borders
-    lineColor: 0,
-    fillColor: false,
-    textColor: 0,
-  };
-  const headStyles = {
-    fontStyle: 'bold',
-    fillColor: [230, 230, 230],
-    textColor: 0,
-    lineColor: 0,
-    halign: 'center',
-    valign: 'middle',
-    fontSize: 7,
-  };
-
+  // --- Header ---
   doc.setFontSize(12).setFont('helvetica', 'bold');
-  doc.text(certificate.StandardName || 'TEST CERTIFICATE', page_width / 2, contentStartY - 10, { align: 'center'});
+  doc.text('TEST CERTIFICATE', pageWidth / 2, topHeaderMargin + 5, { align: 'center'});
   doc.setFontSize(9).setFont('helvetica', 'normal');
-  doc.text('EN-10204-3.1', page_width / 2, contentStartY - 5, { align: 'center' });
+  doc.text('EN-10204-3.1', pageWidth / 2, topHeaderMargin + 10, { align: 'center' });
+  
+  // --- Main Border ---
+  const mainBorderHeight = footerEndY - contentStartY;
+  doc.setLineWidth(0.4);
+  doc.rect(leftMargin, contentStartY, contentWidth, mainBorderHeight);
 
+  let currentY = contentStartY;
 
   // --- Top Info Block ---
   const poDate = certificate.PoDate ? format(new Date(certificate.PoDate), 'dd/MM/yyyy') : '';
   const docDate = certificate.DocDate ? format(new Date(certificate.DocDate), 'dd/MM/yyyy') : '';
-  
-  doc.autoTable({
-    startY: contentStartY,
-    theme: 'grid',
-    styles: { ...tableStyles, cellPadding: 1, fontSize: 8, lineWidth: 0.2, fontStyle: 'bold' },
-    body: [
-        [
-            { content: `Customer Name: ${certificate.AccName || ''}`, colSpan: 2 },
-            { content: `TC No.` },
-            { content: `${certificate.ApsFullDoc || ''}` },
-        ],
-        [
-            { content: `P.O.No. & Date: ${certificate.PoNo || ''}  ${poDate}` , colSpan: 2},
-            { content: `Date` },
-            { content: `${docDate}` },
-        ],
-        [
-            { content: `Start Material`},
-            { content: `${certificate.SM_RM_Name || ''}`},
-            { content: `Size`},
-            { content: ``}, // Placeholder for size, to be decided
-        ]
-    ],
-    columnStyles: {
-        0: { cellWidth: 35 },
-        1: { cellWidth: 139 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 83 },
-    }
-  });
+  const invDate = certificate.InvDate ? format(new Date(certificate.InvDate), 'dd/MM/yyyy') : '';
+  const topInfoHeight = 15;
+  const midPoint = leftMargin + contentWidth / 2;
 
+  doc.setFontSize(8).setFont('helvetica', 'normal');
+  doc.text(`Customer Name: ${certificate.AccName || ''}`, leftMargin + 2, currentY + 5);
+  doc.text(`P.O.No. & Date: ${certificate.PoNo || ''} ${poDate}`, leftMargin + 2, currentY + 9);
+  doc.text(`Invoice No. & Date: ${certificate.InvNo || ''} ${invDate}`, leftMargin + 2, currentY + 13);
+  
+  doc.text(`TC No.: ${certificate.ApsFullDoc || ''}`, midPoint + 15, currentY + 5);
+  doc.text(`Date: ${docDate}`, midPoint + 15, currentY + 9);
+  doc.text(`Start Material: ${certificate.SM_RM_Name || ''}`, midPoint + 15, currentY + 13);
+  
+  doc.setLineWidth(0.2);
+  doc.line(leftMargin, currentY + topInfoHeight, rightMargin + contentWidth, currentY + topInfoHeight); // Horizontal line
+  doc.line(midPoint, currentY, midPoint, currentY + topInfoHeight); // Vertical line
+  
+  currentY += topInfoHeight;
 
   // --- Item Description Table ---
-  const itemDescriptionData = certificate.items.map((item, index) => [
-      index + 1,
-      '', // PO Sr No - not in data
-      item.ProductName || '',
-      certificate.GradeName || '',
-      certificate.DStd_Type || '',
-      item.Specification, // Size
-      item.HeatNo,
-      item.Qty1,
-      item.Qty1Unit
-  ]);
-  // Add empty rows to make it 8
-  while (itemDescriptionData.length < 8) {
-      itemDescriptionData.push(['','','','','','','','','']);
+  const itemDescriptionBody = [];
+  const requiredRows = 8;
+  for (let i = 0; i < requiredRows; i++) {
+    const item = certificate.items[i];
+    itemDescriptionBody.push([
+        item ? i + 1 : '',
+        '', // PO SR NO
+        item ? item.ProductName || '' : '',
+        item ? certificate.GradeName || '' : '',
+        item ? certificate.DStd_Type || '' : '',
+        item ? item.Specification : '',
+        item ? item.HeatNo : '',
+        item ? item.Qty1 : '',
+        item ? item.Qty1Unit : '',
+    ]);
   }
 
   doc.autoTable({
-    head: [['Sr.\nNo', 'P.O.\nSr.No.', 'Item Description', 'Material Specification', 'Dimension Standard', 'Size', 'Lot No.', 'Qty', 'UOM']],
-    body: itemDescriptionData.slice(0, 8), // Ensure max 8 rows
-    startY: (doc as any).lastAutoTable.finalY,
+    head: [['Sr.\nNo', 'P.O.\nSr.No.', 'Item Description', 'Material Specification', 'Dimension Standard', 'Size', 'Heat No / Lot No.', 'Qty', 'UOM']],
+    body: itemDescriptionBody,
+    startY: currentY,
     theme: 'grid',
-    styles: { ...tableStyles, halign: 'center', valign: 'middle', cellPadding: 1, lineWidth: 0.2 },
-    headStyles: { ...headStyles, cellPadding: 1, valign: 'middle', lineWidth: 0.2 },
-    columnStyles: { 
-        0: {cellWidth: 8}, 
-        1: {cellWidth: 12},
-        2: { cellWidth: 65, halign: 'left' }, 
-        3: { cellWidth: 35, halign: 'left' },
-        4: { cellWidth: 35, halign: 'left' },
-        5: {cellWidth: 30}, 
-        6: {cellWidth: 30},
-        7: {cellWidth: 15, halign:'right'}, 
-        8: {cellWidth: 15, halign: 'left'} 
-    },
-    didParseCell: function(data) {
-        if ([2,3,4].includes(data.column.dataKey as number)) {
-            data.cell.styles.halign = 'left';
-        }
-    }
-  });
-
-  const bottomTablesStartY = (doc as any).lastAutoTable.finalY;
-
-
-  // --- Two Column Layout Container ---
-  doc.autoTable({
-    startY: bottomTablesStartY,
-    theme: 'plain',
-    body: [['', '']], // Two empty cells for the two columns
-    styles: {cellPadding: 0, lineWidth:0, minCellHeight: 80}, // Ensure container is tall enough
+    styles: { lineWidth: 0.2, font: 'helvetica', valign: 'middle', fontSize: 7, cellPadding: 1 },
+    headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
     columnStyles: {
-        0: { cellWidth: (page_width - (margin * 2)) * 0.65 }, // Left column 65% width
-        1: { cellWidth: (page_width - (margin * 2)) * 0.35 }, // Right column 35% width
-    },
-    didDrawCell: (data) => {
-        if (data.section !== 'body') return;
-
-        let finalLeftY = data.cell.y;
-        let finalRightY = data.cell.y;
-        const leftCellX = data.cell.x;
-        const rightCellX = data.cell.x + data.cell.width;
-
-        // --- LEFT COLUMN CONTENT ---
-        if (data.column.index === 0) {
-            // Chemical Composition
-            const allChemElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
-            const chemBody = lotDetailsArray.map(lot => {
-                const row: (string|number)[] = [lot.HeatNo];
-                const chemMap = new Map(lot.ChemicalComp.map(cc => [cc.Element, cc.Value]));
-                allChemElements.forEach(col => row.push(chemMap.get(col) as (string|number) ?? '-'));
-                return row;
-            });
-            
-            doc.autoTable({
-                head: [['Chemical Composition']],
-                body: [],
-                startY: finalLeftY,
-                theme: 'grid', styles: { ...tableStyles, fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.2 }, headStyles: {...headStyles, fontSize: 8, minCellHeight: 6, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX }
-            });
-            doc.autoTable({
-                head: [['Lot No', ...allChemElements]],
-                body: chemBody,
-                startY: (doc as any).lastAutoTable.finalY,
-                theme: 'grid', styles: { ...tableStyles, halign: 'center', cellPadding: 0.5, lineWidth: 0.2 }, headStyles: { ...headStyles, halign: 'center', cellPadding: 0.5, lineWidth: 0.2 },
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX },
-                columnStyles: { 0: { cellWidth: 20 } }
-            });
-            finalLeftY = (doc as any).lastAutoTable.finalY;
-
-            // Physical Properties
-            const allPhysProps = ['Y.S\nN/mm2', 'U.T.S\nN/mm2', 'Elongation\n%', 'RA %', 'Hardness\nBHN'];
-            const physBody = lotDetailsArray.map(lot => {
-                const row: (string|number)[] = [lot.HeatNo];
-                const physMap = new Map(lot.PhysicalProp.map(pp => [pp.Property, pp.Value]));
-                allPhysProps.forEach(propName => {
-                    const cleanPropName = propName.replace('\n', ' ');
-                    row.push(physMap.get(cleanPropName) ?? '-');
-                });
-                return row;
-            });
-
-            doc.autoTable({
-                head: [['Physical Properties']],
-                startY: finalLeftY + 1,
-                theme: 'grid', styles: { ...tableStyles, fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.2 }, headStyles: {...headStyles, fontSize: 8, minCellHeight: 6, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX }
-            });
-            doc.autoTable({
-                head: [['Lot No.', ...allPhysProps]],
-                body: physBody,
-                startY: (doc as any).lastAutoTable.finalY,
-                theme: 'grid', styles: { ...tableStyles, halign: 'center', valign: 'middle', lineWidth: 0.2 }, headStyles: {...headStyles, fontSize: 7, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX },
-                columnStyles: { 0: { cellWidth: 20 } }
-            });
-            finalLeftY = (doc as any).lastAutoTable.finalY;
-
-            // Other Tests
-            doc.autoTable({
-                head: [['Other Test Details:']],
-                body: certificate.otherTestDetails?.map((test, i) => [`${i+1}. ${test.Test_Desc} - ${test.Test_Result}`]),
-                startY: finalLeftY + 1,
-                theme: 'grid', styles: {...tableStyles, fontStyle: 'normal', halign: 'left', fontSize: 7, lineWidth: 0.2}, headStyles: {...headStyles, halign: 'left', fontSize: 8, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX }
-            });
-            finalLeftY = (doc as any).lastAutoTable.finalY;
-
-            // Remarks
-            doc.autoTable({
-                head: [['Remarks:']],
-                body: certificate.remarks.map((remark, i) => [`${i+1}. ${remark.TcTerms}`]),
-                startY: finalLeftY + 1,
-                theme: 'grid', styles: {...tableStyles, fontStyle: 'normal', halign: 'left', fontSize: 7, lineWidth: 0.2}, headStyles: {...headStyles, halign: 'left', fontSize: 8, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: leftCellX }
-            });
-        }
-        
-        // --- RIGHT COLUMN CONTENT ---
-        if (data.column.index === 1) {
-            
-            // Laboratory Details
-            const labBody = lotDetailsArray.map(lot => [
-                lot.HeatNo,
-                lot.LabName,
-                lot.Lab_TC_No,
-                lot.Lab_TC_Date ? format(new Date(lot.Lab_TC_Date), 'dd/MM/yyyy') : '-'
-            ]);
-
-            doc.autoTable({
-                head: [['Laboratory Details']],
-                startY: finalRightY, 
-                theme: 'grid', styles: {...tableStyles, fontSize: 8, lineWidth: 0.2 }, headStyles: {...headStyles, fontStyle: 'bold', halign: 'center', fontSize: 8, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: rightCellX - data.cell.width },
-            });
-             doc.autoTable({
-                head: [['Lot No', 'Laboratory Name', 'Report No.', 'Report Dt.']],
-                body: labBody,
-                startY: (doc as any).lastAutoTable.finalY,
-                theme: 'grid', 
-                styles: {...tableStyles, fontSize: 7, halign: 'center', valign: 'middle', lineWidth: 0.2 }, 
-                headStyles: {...headStyles, fontSize: 7, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: rightCellX - data.cell.width },
-            });
-            finalRightY = (doc as any).lastAutoTable.finalY;
-
-            // Charpy Impact Test
-            const charpyBody = lotDetailsArray.flatMap(lot => lot.ImpactTest.map(it => [it.Size, it.Temperature, it.Value1, it.Value2, it.Value3, it.AvgValue]));
-            doc.autoTable({
-                head: [['Charpy Impact Test (Joules)']],
-                startY: finalRightY + 1,
-                theme: 'grid', styles: { ...tableStyles, fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.2 }, headStyles: {...headStyles, fontSize: 8, minCellHeight: 6, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: rightCellX - data.cell.width },
-            });
-            doc.autoTable({
-                head: [['Size', 'TEMP C', 'I', 'II', 'III', 'Average']],
-                body: charpyBody.length > 0 ? charpyBody : [['', '', '', '', '', '']],
-                startY: (doc as any).lastAutoTable.finalY,
-                theme: 'grid', styles: { ...tableStyles, halign: 'center', lineWidth: 0.2 }, headStyles: {...headStyles, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: rightCellX - data.cell.width },
-            });
-            finalRightY = (doc as any).lastAutoTable.finalY;
-
-            // Heat Test Details
-             doc.autoTable({
-                head: [['Heat Test Details']],
-                body: certificate.heatTreatDetails?.map(ht => [ht.Heat_Desc]) || [['-']],
-                startY: finalRightY + 1,
-                theme: 'grid', styles: { ...tableStyles, fontStyle: 'normal', halign: 'left', fontSize: 7, lineWidth: 0.2}, headStyles: {...headStyles, halign: 'left', fontSize: 8, lineWidth: 0.2},
-                tableWidth: data.cell.width,
-                margin: { left: rightCellX - data.cell.width },
-            });
-        }
+        0: { cellWidth: 10, halign: 'right' },
+        1: { cellWidth: 15, halign: 'center' },
+        2: { cellWidth: 60, halign: 'left' },
+        3: { cellWidth: 45, halign: 'left' },
+        4: { cellWidth: 45, halign: 'left' },
+        5: { cellWidth: 25, halign: 'center' },
+        6: { cellWidth: 30, halign: 'center' },
+        7: { cellWidth: 20, halign: 'right' },
+        8: { cellWidth: 22, halign: 'left' }
     }
   });
 
+  currentY = (doc as any).lastAutoTable.finalY;
 
+  // --- Nested Two-Column Layout ---
+  const nestedTableStartY = currentY;
+  
+  const leftColumnWidth = contentWidth * 0.58;
+  const rightColumnWidth = contentWidth * 0.42;
+
+  // --- Left Column Tables ---
+  let leftY = nestedTableStartY;
+  
+  // Chemical Composition - DYNAMIC
+  const allChemElements = Array.from(new Set(lotDetailsArray.flatMap(lot => lot.ChemicalComp.map(cc => cc.Element))));
+  if (allChemElements.length > 0) {
+    const chemBody = lotDetailsArray.map(lot => {
+        const row: (string | number)[] = [lot.HeatNo];
+        const chemMap = new Map(lot.ChemicalComp.map(cc => [cc.Element, cc.Value]));
+        allChemElements.forEach(col => row.push(chemMap.get(col) as string | number ?? '-'));
+        return row;
+    });
+    const chemHeader = ['Lot No', ...allChemElements];
+
+    doc.autoTable({
+        head: [
+          [{ content: 'Chemical Composition (%)', colSpan: chemHeader.length, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
+          chemHeader
+        ],
+        body: chemBody,
+        startY: leftY,
+        theme: 'grid',
+        tableWidth: leftColumnWidth,
+        margin: { left: leftMargin },
+        styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'center' },
+        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+        columnStyles: { 0: { halign: 'left' } },
+    });
+    leftY = (doc as any).lastAutoTable.finalY;
+  }
+
+  // Physical Properties - DYNAMIC
+  const allPhysProps = Array.from(new Set(lotDetailsArray.flatMap(lot => lot.PhysicalProp.map(pp => pp.Property))));
+  if (allPhysProps.length > 0) {
+    const physBody = lotDetailsArray.map(lot => {
+        const row: (string|number)[] = [lot.HeatNo];
+        const physMap = new Map(lot.PhysicalProp.map(pp => [pp.Property, pp.Value]));
+        allPhysProps.forEach(propName => row.push(physMap.get(propName) ?? '-'));
+        return row;
+    });
+    const physHeader = ['Lot No.', ...allPhysProps];
+
+    doc.autoTable({
+        head: [
+            [{ content: 'Physical Properties', colSpan: physHeader.length, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
+            physHeader
+        ],
+        body: physBody,
+        startY: leftY,
+        theme: 'grid',
+        tableWidth: leftColumnWidth,
+        margin: { left: leftMargin },
+        styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'center' },
+        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+        columnStyles: { 0: { halign: 'left' } },
+    });
+    leftY = (doc as any).lastAutoTable.finalY;
+  }
+
+  // Other Tests
+  const otherTestBody = certificate.otherTestDetails?.map((test) => [`${test.Test_Desc} - ${test.Test_Result}`]) || [];
+  doc.autoTable({
+      head: [['Other Test Details']],
+      body: otherTestBody,
+      startY: leftY,
+      theme: 'grid',
+      tableWidth: leftColumnWidth,
+      margin: { left: leftMargin },
+      styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'left' },
+      headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+  });
+  leftY = (doc as any).lastAutoTable.finalY;
+  
+  // Remarks
+  const remarksBody = certificate.remarks.map((remark) => [remark.TcTerms]);
+  doc.autoTable({
+      head: [['Remarks']],
+      body: remarksBody,
+      startY: leftY,
+      theme: 'grid',
+      tableWidth: leftColumnWidth,
+      margin: { left: leftMargin },
+      styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'left' },
+      headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+  });
+  leftY = (doc as any).lastAutoTable.finalY;
+
+  // --- Right Column Tables ---
+  let rightY = nestedTableStartY;
+  
+  // Laboratory Details
+  const labBody = lotDetailsArray.map(lot => [lot.Lab_TC_No, lot.Lab_TC_Date ? format(new Date(lot.Lab_TC_Date), 'dd/MM/yyyy') : '', lot.LabName]);
+  doc.autoTable({
+    head: [
+        [{ content: 'Laboratory Details', colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
+        ['Report No.', 'Report Date', 'Laboratory Name']
+    ],
+    body: labBody,
+    startY: rightY,
+    theme: 'grid',
+    tableWidth: rightColumnWidth,
+    margin: { left: leftMargin + leftColumnWidth },
+    styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'center' },
+    headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+  });
+  rightY = (doc as any).lastAutoTable.finalY;
+
+  // Charpy Impact Test
+  doc.autoTable({
+    head: [
+        [{ content: 'Charpy Impact Test', colSpan: 4, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
+        ['Temp', 'Size', 'KV', 'Result']
+    ],
+    body: [['As per Standard', '', '', '']],
+    startY: rightY,
+    theme: 'grid',
+    tableWidth: rightColumnWidth,
+    margin: { left: leftMargin + leftColumnWidth },
+    styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'center' },
+    headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+  });
+  rightY = (doc as any).lastAutoTable.finalY;
+
+  // Heat Test Details
+  const heatTestBody = certificate.heatTreatDetails?.map((test) => [`${test.Heat_Code} - ${test.Heat_Desc}`]);
+  doc.autoTable({
+      head: [['Heat Test Details']],
+      body: heatTestBody,
+      startY: rightY,
+      theme: 'grid',
+      tableWidth: rightColumnWidth,
+      margin: { left: leftMargin + leftColumnWidth },
+      styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'left' },
+      headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
+  });
+  rightY = (doc as any).lastAutoTable.finalY;
+  
   // --- Footer Section ---
   const companyTitle = certificate.BranchId === 2 ? "For FORGED INDUSTRIAL CORPORATION" : "For NEW INDIA MANUFACTURING CO";
+  const footerContentY = footerEndY - 12; // Position inside the border
   
-  doc.setFontSize(9).setFont('helvetica', 'bold');
-  doc.text('SURVEYOR', margin, footerStartY + 10, { align: 'left' });
-  doc.text(companyTitle, page_width - margin, footerStartY + 10, { align: 'right' });
-  doc.text('Auth. Signatory', page_width - margin, footerStartY + 15, { align: 'right' });
+  doc.setFontSize(9).setFont('helvetica', 'normal');
+  doc.text('SURVEYOR', leftMargin + 2, footerContentY, { align: 'left' });
+  doc.text(companyTitle, pageWidth - rightMargin - 2, footerContentY, { align: 'right' });
+  doc.text('Auth. Signatory', pageWidth - rightMargin - 2, footerContentY + 8, { align: 'right' });
 
   // Save the PDF
   doc.save(`Certificate-${certificate.ApsFullDoc}.pdf`);

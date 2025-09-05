@@ -52,7 +52,7 @@ interface LotTestValueFormProps {
 }
 
 const physicalProperties = ['Y.S Mpa', 'U.T.S Mpa', 'Elongation %', 'RA %', 'Hardness BHN'];
-const standardChemicalElements = ['C %', 'Mn %', 'Si %', 'S %', 'P %', 'Cr %', 'Ni %', 'Mo %', 'Cu %', 'V %', 'CE %'];
+const standardChemicalElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
 
 
 export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps) {

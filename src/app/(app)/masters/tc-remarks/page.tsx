@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { TcRemarkForm } from '@/components/masters/tc-remark-form';
+import { toast } from '@/hooks/use-toast';
 
 export default function TcRemarksPage() {
   const [data, setData] = React.useState<GenericMaster[]>([]);
@@ -79,6 +80,24 @@ export default function TcRemarksPage() {
     fetchData();
   };
 
+  const handleDelete = async (record: GenericMaster) => {
+    try {
+      await axios.delete(`/api/tcremarksfix/${record.id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The record has been deleted successfully.`,
+      });
+      fetchData();
+    } catch (error) {
+      console.error("Failed to delete record:", error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the record. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
@@ -91,9 +110,9 @@ export default function TcRemarksPage() {
         columns={columns} 
         data={data} 
         isLoading={isLoading} 
-        masterType="tcremarksfix"
         onRefresh={fetchData}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">

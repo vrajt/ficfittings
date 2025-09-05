@@ -10,10 +10,14 @@ import { useTabs } from '@/components/tabs/tab-provider';
 import { toast } from '@/hooks/use-toast';
 import { generateCertificatePDF } from '@/lib/pdf-generator';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Book, Calendar } from 'lucide-react';
 
 export default function CertificatesPage() {
-  const [data, setData] = React.useState<Certificate[]>([]);
+  const [allData, setAllData] = React.useState<Certificate[]>([]);
+  const [displayedData, setDisplayedData] = React.useState<Certificate[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [showAll, setShowAll] = React.useState(false);
   const { addTab } = useTabs();
 
   const columns: ColumnDef<Certificate>[] = [
@@ -44,7 +48,7 @@ export default function CertificatesPage() {
         createdBy: item.CreatedBy,
         updatedAt: item.UpdateDate,
       }));
-      setData(formattedData.reverse());
+      setAllData(formattedData.reverse());
     } catch(error) {
       console.error("Failed to fetch certificates", error);
       toast({
@@ -60,6 +64,16 @@ export default function CertificatesPage() {
   React.useEffect(() => {
     fetchData();
   }, []);
+  
+  React.useEffect(() => {
+    if (showAll) {
+      setDisplayedData(allData);
+    } else {
+      const currentYear = new Date().getFullYear();
+      const currentYearData = allData.filter(cert => cert.date && new Date(cert.date).getFullYear() === currentYear);
+      setDisplayedData(currentYearData);
+    }
+  }, [allData, showAll]);
 
   const handleEdit = (record: Certificate) => {
     const path = `/certificates/${record.id}`;
@@ -107,15 +121,21 @@ export default function CertificatesPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      <PageHeader
-        title="Test Certificates"
-        description="Manage and generate test certificates."
-        actionButtonText="New Certificate"
-        onActionClick={handleAddNew}
-      />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <PageHeader
+          title="Test Certificates"
+          description="Manage and generate test certificates."
+          actionButtonText="New Certificate"
+          onActionClick={handleAddNew}
+        />
+        <Button variant="outline" onClick={() => setShowAll(prev => !prev)}>
+            {showAll ? <Calendar className="mr-2 h-4 w-4" /> : <Book className="mr-2 h-4 w-4" />}
+            {showAll ? 'Show Current Year' : 'Show All Certificates'}
+        </Button>
+      </div>
       <DataTable 
         columns={columns} 
-        data={data} 
+        data={displayedData} 
         isLoading={isLoading} 
         onEdit={handleEdit}
         onRefresh={fetchData}

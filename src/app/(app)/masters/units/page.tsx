@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { MasterForm } from '@/components/masters/master-form';
+import { toast } from '@/hooks/use-toast';
 
 
 export default function UnitsPage() {
@@ -98,6 +99,25 @@ export default function UnitsPage() {
     setIsDialogOpen(false);
   };
 
+  const handleDelete = async (record: GenericMaster) => {
+    const id = record.id;
+    try {
+      await axios.delete(`/api/unitmaster/${id}`);
+      toast({
+        title: "Record Deleted",
+        description: `The unit with ID ${id} has been deleted.`,
+      });
+      fetchData();
+    } catch (error) {
+      console.error(`Failed to delete unit ${id}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the unit. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
@@ -110,9 +130,9 @@ export default function UnitsPage() {
         columns={columns} 
         data={data} 
         isLoading={isLoading} 
-        masterType={masterType} 
         onRefresh={fetchData} 
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

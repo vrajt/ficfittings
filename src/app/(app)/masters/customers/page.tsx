@@ -17,6 +17,7 @@ import {
 import { CustomerForm } from '@/components/masters/customer-form';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function CustomersPage() {
   const masterType = 'customers';
@@ -100,6 +101,24 @@ export default function CustomersPage() {
     fetchData();
   };
 
+  const handleDelete = async (customer: Customer) => {
+    try {
+      await axios.delete(`/api/${masterType}/${customer.id}`);
+      toast({
+        title: "Customer Deleted",
+        description: `The customer record has been deleted successfully.`,
+      });
+      fetchData();
+    } catch (error) {
+      console.error("Failed to delete customer:", error);
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the customer. Please try again.",
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <PageHeader
@@ -112,9 +131,9 @@ export default function CustomersPage() {
         columns={columns} 
         data={data} 
         isLoading={isLoading} 
-        masterType={masterType}
         onRefresh={fetchData}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
