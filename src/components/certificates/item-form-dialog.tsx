@@ -24,17 +24,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { TcItem, TcMain } from '@/lib/types';
+import type { TcItem } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
+import { Input } from '../ui/input';
 
 interface ItemFormDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   initialData: TcItem | null;
-  tcMainData: TcMain | null;
   onSave: (item: TcItem) => void;
 }
 
@@ -44,28 +43,30 @@ const formSchema = z.object({
   HeatNo: z.string().optional(),
   Qty1: z.preprocess((val) => Number(val), z.number().min(0)),
   Qty1Unit: z.string().optional(),
-  GradeName: z.string().optional(),
-  //PId: z.number().optional(),
+  Po_Inv_PId: z.preprocess((val) => val ? Number(val) : 0, z.number().optional()),
+  Id: z.number().optional(),
+  PId: z.number().optional(),
+  _tempId: z.number().optional(),
 });
 
-export function ItemFormDialog({ isOpen, setIsOpen, initialData, tcMainData, onSave }: ItemFormDialogProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemFormDialogProps) {
   const [uomOptions, setUomOptions] = React.useState<{ label: string; value: string }[]>([]);
   const [lotNoOptions, setLotNoOptions] = React.useState<{ label: string; value: string }[]>([]);
-  const isEditModeItem = !!initialData;
+  const isEditMode = !!initialData;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ProductName: '',
-      Specification: '',
-      HeatNo: '',
-      Qty1: 0,
-      Qty1Unit: '',
-      GradeName: '',
+        ProductName: '',
+        Specification: '',
+        HeatNo: '',
+        Qty1: 0,
+        Qty1Unit: '',
+        Po_Inv_PId: 0,
     },
   });
-  
+
   React.useEffect(() => {
     async function fetchData() {
       try {
@@ -94,132 +95,123 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, tcMainData, onS
     fetchData();
   }, []);
 
-
   React.useEffect(() => {
     if (isOpen) {
       if (initialData) {
         form.reset(initialData);
       } else {
         form.reset({
-          ProductName: '',
-          Specification: '',
-          HeatNo: '',
-          Qty1: 0,
-          Qty1Unit: '',
-          GradeName: tcMainData?.GradeName || '',
+            ProductName: '',
+            Specification: '',
+            HeatNo: '',
+            Qty1: 0,
+            Qty1Unit: '',
+            Po_Inv_PId: 0,
         });
       }
     }
-  }, [isOpen, initialData, form, tcMainData]);
+  }, [isOpen, initialData, form]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    const dataToSave: TcItem = {
-      ...initialData,
-      ...values,
-     // PId: initialData?.PId || Date.now(), // Use existing or generate temporary new one
-      Id: tcMainData?.Id || 0,
-      ApsFullDoc: tcMainData?.ApsFullDoc || '',
-      CreatedDate: new Date().toISOString(),
-      UpdateDate: new Date().toISOString(),
-    };
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    
+    let dataToSave: TcItem;
+
+    if (isEditMode && initialData) {
+        dataToSave = {
+            ...initialData,
+            ...values,
+            _tempId: initialData._tempId, // Ensure _tempId is preserved
+        };
+    } else {
+         dataToSave = values as TcItem;
+    }
+
     onSave(dataToSave);
-    setIsSubmitting(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEditModeItem ? 'Edit Product Item' : 'Add New Product Item'}</DialogTitle>
-          <DialogDescription>
-            Fill in the details for this product item.
-          </DialogDescription>
+          <DialogTitle>{isEditMode ? 'Edit Product Item' : 'Add Product Item'}</DialogTitle>
+          <DialogDescription>Fill in the details for the product item.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="ProductName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="Specification"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Specification</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="GradeName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grade</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="HeatNo"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Heat No.</FormLabel>
-                     <Combobox
-                        options={lotNoOptions}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Heat No..."
+                <FormField
+                    control={form.control}
+                    name="ProductName"
+                    render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                        <FormLabel>Product Name</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="Specification"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Specification</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="Po_Inv_PId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>PO Number</FormLabel>
+                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="HeatNo"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Heat No.</FormLabel>
+                            <Combobox options={lotNoOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select Heat No..." />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                    <FormField
+                        control={form.control}
+                        name="Qty1"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Quantity</FormLabel>
+                            <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="Qty1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quantity</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="Qty1Unit"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>UOM</FormLabel>
-                    <Combobox
-                        options={uomOptions}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select UOM..."
+                    <FormField
+                        control={form.control}
+                        name="Qty1Unit"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>UOM</FormLabel>
+                                <Combobox options={uomOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select UOM..." />
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : isEditModeItem ? 'Update Item' : 'Add Item'}
+              <Button type="submit">
+                {isEditMode ? 'Update Item' : 'Add Item'}
               </Button>
             </DialogFooter>
           </form>

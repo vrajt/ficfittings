@@ -34,8 +34,8 @@ const getLotDetails = (allLotData: any[], heatNo: string): LotTestValue | null =
         const recordsForLot = allLotData.filter((item: any) => item.HeatNo === heatNo);
 
         if (recordsForLot.length > 0) {
-             const baseRecord = recordsForLot[0] || {};
-              const structuredData: LotTestValue = {
+            const baseRecord = recordsForLot[0] || {};
+            const structuredData: LotTestValue = {
                 Id: baseRecord.Id,
                 HeatNo: heatNo,
                 LabName: baseRecord.Lab_Name || '',
@@ -44,34 +44,47 @@ const getLotDetails = (allLotData: any[], heatNo: string): LotTestValue | null =
                 ImpactTest: [],
                 ChemicalComp: [],
                 PhysicalProp: [],
-              };
+            };
 
-              const impactTests = new Map<string, any>();
-              recordsForLot.forEach((rec: any) => {
+            // Handle legacy data where IT values are on all rows
+            if (baseRecord.ITJ_Temp || baseRecord.ITJ_Size || baseRecord.ITJ_Value_1) {
+                structuredData.ImpactTest.push({
+                    Temperature: baseRecord.ITJ_Temp,
+                    Size: baseRecord.ITJ_Size,
+                    Value1: baseRecord.ITJ_Value_1,
+                    Value2: baseRecord.ITJ_Value_2,
+                    Value3: baseRecord.ITJ_Value_3,
+                    AvgValue: baseRecord.ITJ_Value_Avg,
+                });
+            }
+
+            recordsForLot.forEach((rec: any) => {
                 switch (rec.Parm_Type) {
-                  case 'CC':
-                    structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueC });
-                    break;
-                  case 'PP':
-                    structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
-                    break;
-                  case 'IT':
-                    const key = `${rec.ITJ_Temp || 'N/A'}-${rec.ITJ_Size || 'N/A'}`;
-                    if (!impactTests.has(key)) {
-                        impactTests.set(key, {
-                            Temperature: rec.ITJ_Temp,
-                            Size: rec.ITJ_Size,
-                            Value1: rec.ITJ_Value_1,
-                            Value2: rec.ITJ_Value_2,
-                            Value3: rec.ITJ_Value_3,
-                            AvgValue: rec.ITJ_Value_Avg,
-                        });
-                    }
-                    break;
+                    case 'CC':
+                    case 'C':
+                        structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueC });
+                        break;
+                    case 'PP':
+                    case 'MP': // Handle legacy Physical Property type
+                        structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
+                        break;
+                    case 'IT':
+                        // Handle new data where IT is its own record type
+                        if (!structuredData.ImpactTest.some(it => it.Temperature === rec.ITJ_Temp && it.Size === rec.ITJ_Size)) {
+                            structuredData.ImpactTest.push({
+                                Temperature: rec.ITJ_Temp,
+                                Size: rec.ITJ_Size,
+                                Value1: rec.ITJ_Value_1,
+                                Value2: rec.ITJ_Value_2,
+                                Value3: rec.ITJ_Value_3,
+                                AvgValue: rec.ITJ_Value_Avg,
+                            });
+                        }
+                        break;
                 }
-              });
-              structuredData.ImpactTest = Array.from(impactTests.values());
-              return structuredData;
+            });
+            
+            return structuredData;
         }
         return null;
     } catch (error) {
@@ -104,9 +117,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Header ---
   doc.setFontSize(12).setFont('helvetica', 'bold');
-  doc.text('TEST CERTIFICATE', pageWidth / 2, topHeaderMargin + 5, { align: 'center'});
+  doc.text('TEST CERTIFICATE', pageWidth / 2, topHeaderMargin + 15, { align: 'center'});
   doc.setFontSize(9).setFont('helvetica', 'normal');
-  doc.text('EN-10204-3.1', pageWidth / 2, topHeaderMargin + 10, { align: 'center' });
+  doc.text('EN-10204-3.1', pageWidth / 2, topHeaderMargin + 18, { align: 'center' });
   
   // --- Main Border ---
   const mainBorderHeight = footerEndY - contentStartY;
@@ -144,7 +157,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     const item = certificate.items[i];
     itemDescriptionBody.push([
         item ? i + 1 : '',
-        '', // PO SR NO
+        item ? item.Po_Inv_PId || '' : '',
         item ? item.ProductName || '' : '',
         item ? certificate.GradeName || '' : '',
         item ? certificate.DStd_Type || '' : '',
@@ -291,12 +304,21 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   rightY = (doc as any).lastAutoTable.finalY;
 
   // Charpy Impact Test
+  const impactTestBody = lotDetailsArray.flatMap(lot => 
+    lot.ImpactTest.map(it => [
+        it.Temperature ?? 'N/A',
+        it.Size ?? 'N/A',
+        [it.Value1, it.Value2, it.Value3].filter(Boolean).join(', '),
+        it.AvgValue ?? 'N/A'
+    ])
+  );
+
   doc.autoTable({
     head: [
         [{ content: 'Charpy Impact Test', colSpan: 4, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
         ['Temp', 'Size', 'KV', 'Result']
     ],
-    body: [['As per Standard', '', '', '']],
+    body: impactTestBody.length > 0 ? impactTestBody : [['', '', '', '']],
     startY: rightY,
     theme: 'grid',
     tableWidth: rightColumnWidth,
@@ -321,7 +343,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   rightY = (doc as any).lastAutoTable.finalY;
   
   // --- Footer Section ---
-  const companyTitle = certificate.BranchId === 2 ? "For FORGED INDUSTRIAL CORPORATION" : "For NEW INDIA MANUFACTURING CO";
+  const companyTitle = certificate.BranchId == 2 ? "For FORGED INDUSTRIAL CORPORATION" : "For NEW INDIA MANUFACTURING CO";
   const footerContentY = footerEndY - 12; // Position inside the border
   
   doc.setFontSize(9).setFont('helvetica', 'normal');
@@ -332,3 +354,4 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   // Save the PDF
   doc.save(`Certificate-${certificate.ApsFullDoc}.pdf`);
 };
+                   

@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, Save, Trash2 } from 'lucide-react';
 import type { LotTestValue } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -22,6 +22,16 @@ import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
   HeatNo: z.string(),
@@ -49,15 +59,17 @@ const formSchema = z.object({
 interface LotTestValueFormProps {
   initialData: LotTestValue;
   onSave?: () => void;
+  isEditing: boolean;
 }
 
 const physicalProperties = ['Y.S Mpa', 'U.T.S Mpa', 'Elongation %', 'RA %', 'Hardness BHN'];
 const standardChemicalElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
 
 
-export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps) {
+export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValueFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [labOptions, setLabOptions] = React.useState<{label: string, value: string}[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -91,76 +103,82 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
             return found || { Property: prop, Value: '' };
         });
 
-        // Start with standard elements
-        const chemicalDataMap = new Map<string, { Element: string; Value: string }>();
+        const chemicalDataMap = new Map<string, { Element: string; Value: string | null }>();
         standardChemicalElements.forEach(elem => {
             chemicalDataMap.set(elem, { Element: elem, Value: '' });
         });
 
-        // Override with initial data
         initial.ChemicalComp?.forEach(item => {
-            chemicalDataMap.set(item.Element, { ...item, Value: item.Value?.toString() ?? '' });
+            chemicalDataMap.set(item.Element, item);
         });
         
         const chemicalData = Array.from(chemicalDataMap.values());
-
-        const impactData = initial.ImpactTest?.length > 0 
-            ? initial.ImpactTest 
-            : [{ Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' }];
         
+        const impactTestData = initial.ImpactTest?.length > 0 ? initial.ImpactTest : [{
+            Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '',
+        }];
+
         return {
             ...initial,
             ChemicalComp: chemicalData,
             PhysicalProp: physicalData,
-            ImpactTest: impactData,
+            ImpactTest: impactTestData,
         };
     };
     
     form.reset(mergeData(initialData));
 }, [initialData, form]);
 
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
+    const values = form.getValues();
     
-    const flatData = [];
+    const impactTestData = values.ImpactTest.length > 0 
+        ? values.ImpactTest[0] 
+        : { Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' };
+
+    const commonData = {
+        HeatNo: values.HeatNo,
+        Lab_Name: values.LabName,
+        Lab_TC_No: values.Lab_TC_No,
+        Lab_TC_Date: values.Lab_TC_Date,
+        ITJ_Temp: impactTestData?.Temperature,
+        ITJ_Size: impactTestData?.Size,
+        ITJ_Value_1: impactTestData?.Value1,
+        ITJ_Value_2: impactTestData?.Value2,
+        ITJ_Value_3: impactTestData?.Value3,
+        ITJ_Value_Avg: impactTestData?.AvgValue,
+    };
     
+    const flatData: any[] = [];
+
     values.ChemicalComp.forEach(item => {
-        if (item.Value) {
+        if (item.Element && item.Value) {
             flatData.push({
-                HeatNo: values.HeatNo,
-                Lab_Name: values.LabName,
-                Lab_TC_No: values.Lab_TC_No,
-                Lab_TC_Date: values.Lab_TC_Date,
+                ...commonData,
                 Parm_Type: 'CC',
                 Parm_Name: item.Element,
-                Test_ValueC: item.Value,
-                Test_ValueN: 0 // Set to 0 as it's not used but might be required by DB
+                Test_ValueC: item.Value || '',
             });
         }
     });
 
     values.PhysicalProp.forEach(item => {
-        if (item.Value) {
-             flatData.push({
-                HeatNo: values.HeatNo,
-                Lab_Name: values.LabName,
-                Lab_TC_No: values.Lab_TC_No,
-                Lab_TC_Date: values.Lab_TC_Date,
+        if (item.Property && item.Value) {
+            flatData.push({
+                ...commonData,
                 Parm_Type: 'PP',
                 Parm_Name: item.Property,
-                Test_ValueC: item.Value,
+                Test_ValueC: item.Value || '',
             });
         }
     });
 
-    values.ImpactTest.forEach(item => {
-        if (item.Temperature !== null || item.Size || item.AvgValue) {
+    const hasImpactData = values.ImpactTest.some(item => item.Temperature !== null || item.Size || item.Value1 || item.Value2 || item.Value3 || item.AvgValue);
+    if(hasImpactData) {
+        values.ImpactTest.forEach(item => {
              flatData.push({
-                HeatNo: values.HeatNo,
-                Lab_Name: values.LabName,
-                Lab_TC_No: values.Lab_TC_No,
-                Lab_TC_Date: values.Lab_TC_Date,
+                ...commonData,
                 Parm_Type: 'IT',
                 ITJ_Temp: item.Temperature,
                 ITJ_Size: item.Size,
@@ -169,21 +187,19 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
                 ITJ_Value_3: item.Value3,
                 ITJ_Value_Avg: item.AvgValue,
             });
-        }
-    });
+        });
+    }
+
+    // If after all that, flatData is empty but we have common data, push at least one record.
+    if (flatData.length === 0 && values.HeatNo) {
+        flatData.push({ ...commonData, Parm_Type: 'IT' });
+    }
     
     try {
-        const existingRecordsResponse = await axios.get('/api/lot-test-values');
-        const existingRecordIds = existingRecordsResponse.data
-            .filter((rec: any) => rec.HeatNo === values.HeatNo)
-            .map((rec: any) => rec.Id);
-        
-        if (existingRecordIds.length > 0) {
-          await Promise.all(existingRecordIds.map((id: number) => axios.delete(`/api/lot-test-values/${id}`)));
-        }
+        await axios.post('/api/lot-test-values/delete-by-heatno', { heatNo: values.HeatNo });
 
         if (flatData.length > 0) {
-          await Promise.all(flatData.map(record => axios.post('/api/lot-test-values', record)));
+          await axios.post('/api/lot-test-values/bulk', { records: flatData });
         }
 
         toast({
@@ -200,18 +216,25 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
         });
     } finally {
         setIsSubmitting(false);
+        setIsConfirmOpen(false);
     }
+  }
+
+  const onFinalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsConfirmOpen(true);
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-       <ScrollArea className="h-[calc(100vh-220px)]">
+      <form onSubmit={onFinalSubmit}>
+       <fieldset disabled={!isEditing} className="space-y-4">
+        <ScrollArea className="h-[calc(100vh-220px)]">
         <div className="space-y-4 p-1">
             <div className="flex justify-between items-center sticky top-0 bg-background z-10 py-2">
                 <h2 className="text-xl font-semibold">Heat / Lot No: {initialData.HeatNo}</h2>
-                <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save'}
+                <Button type="submit" disabled={isSubmitting || !isEditing}>
+                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save</>}
                 </Button>
             </div>
             
@@ -372,6 +395,21 @@ export function LotTestValueForm({ initialData, onSave }: LotTestValueFormProps)
             </div>
         </div>
       </ScrollArea>
+      </fieldset>
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to save?</AlertDialogTitle>
+            <AlertDialogDescription>
+            This will overwrite the existing test values for this lot. This action cannot be undone.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </form>
     </Form>
   );

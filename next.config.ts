@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  devIndicators: {
+    buildActivity: false,
+  },
   async rewrites() {
     return [
       {

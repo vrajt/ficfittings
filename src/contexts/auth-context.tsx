@@ -2,31 +2,54 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: () => void;
+  login: (id: string, pass: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const validUsers = [
+    { id: 'amin', pass: 'amin@123' },
+    { id: 'mtc', pass: 'amin@123' }
+];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Start as true to prevent flash of unstyled content
+  const [isLoading, setIsLoading] = useState(false); // No need to check storage, so start with false.
   const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    // Since we are not persisting auth, we can just set loading to false.
-    // The initial state of isAuthenticated is already false.
-    setIsLoading(false);
-  }, []);
+   useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated && pathname === '/login') {
+        router.push('/dashboard');
+      }
+      if (!isAuthenticated && pathname !== '/login') {
+        router.push('/login');
+      }
+    }
+  }, [isAuthenticated, isLoading, router, pathname]);
 
-  const login = () => {
-    setIsAuthenticated(true);
-    router.push('/dashboard');
+  const login = (id: string, pass: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        setIsLoading(true);
+        setTimeout(() => { // Simulate network delay
+            const user = validUsers.find(u => u.id === id && u.pass === pass);
+            if (user) {
+                setIsAuthenticated(true);
+                router.push('/dashboard');
+                resolve();
+            } else {
+                reject(new Error('Invalid User ID or Password. Please try again.'));
+            }
+            setIsLoading(false);
+        }, 500);
+    });
   };
 
   const logout = () => {

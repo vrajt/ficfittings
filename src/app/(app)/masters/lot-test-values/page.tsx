@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -22,9 +21,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search } from 'lucide-react';
+import { Edit, Search } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Helper to structure the flat data from the API
 const structureLotData = (records: any[], lotNo: string): LotTestValue => {
   const baseRecord = records[0] || {};
   
@@ -39,37 +38,51 @@ const structureLotData = (records: any[], lotNo: string): LotTestValue => {
     PhysicalProp: [],
   };
 
-  // Group records by their specific test types
   const impactTests = new Map<string, any>();
 
-  records.forEach(rec => {
-    switch (rec.Parm_Type) {
-      case 'CC':
-        structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueC });
-        break;
-      case 'PP':
-        structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
-        break;
-      case 'IT':
-        // Group impact tests by temperature, as there can be multiple readings
-        const key = `${rec.ITJ_Temp || 'N/A'}-${rec.ITJ_Size || 'N/A'}`;
-        if (!impactTests.has(key)) {
-            impactTests.set(key, {
-                Temperature: rec.ITJ_Temp,
-                Size: rec.ITJ_Size,
-                Value1: rec.ITJ_Value_1,
-                Value2: rec.ITJ_Value_2,
-                Value3: rec.ITJ_Value_3,
-                AvgValue: rec.ITJ_Value_Avg,
-            });
+    records.forEach(rec => {
+        // This logic ensures that even if IT values are on other records, they are picked up.
+        if (rec.ITJ_Temp || rec.ITJ_Size || rec.ITJ_Value_1) {
+            const key = `${rec.ITJ_Temp || 'N/A'}-${rec.ITJ_Size || 'N/A'}`;
+            if (!impactTests.has(key)) {
+                impactTests.set(key, {
+                    Temperature: rec.ITJ_Temp,
+                    Size: rec.ITJ_Size,
+                    Value1: rec.ITJ_Value_1,
+                    Value2: rec.ITJ_Value_2,
+                    Value3: rec.ITJ_Value_3,
+                    AvgValue: rec.ITJ_Value_Avg,
+                });
+            }
         }
-        break;
-    }
-  });
+        
+        switch (rec.Parm_Type) {
+            case 'CC':
+            case 'C':
+                if (rec.Parm_Name && !structuredData.ChemicalComp.some(c => c.Element === rec.Parm_Name)) {
+                    structuredData.ChemicalComp.push({ Element: rec.Parm_Name, Value: rec.Test_ValueC });
+                }
+                break;
+            case 'PP':
+            case 'MP':
+                 if (rec.Parm_Name && !structuredData.PhysicalProp.some(p => p.Property === rec.Parm_Name)) {
+                    structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
+                }
+                break;
+        }
+    });
 
   structuredData.ImpactTest = Array.from(impactTests.values());
-  if (structuredData.ImpactTest.length === 0) {
-      structuredData.ImpactTest.push({ Temperature: 0, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' });
+  if (structuredData.ImpactTest.length === 0 && records.length > 0) {
+      const firstRec = records[0];
+      structuredData.ImpactTest.push({
+        Temperature: firstRec.ITJ_Temp,
+        Size: firstRec.ITJ_Size,
+        Value1: firstRec.ITJ_Value_1,
+        Value2: firstRec.ITJ_Value_2,
+        Value3: firstRec.ITJ_Value_3,
+        AvgValue: firstRec.ITJ_Value_Avg,
+      });
   }
 
   return structuredData;
@@ -85,16 +98,16 @@ export default function LotTestValuesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [newLotNumber, setNewLotNumber] = React.useState('');
   const [searchTerm, setSearchTerm] = React.useState('');
-
+  const [isEditing, setIsEditing] = React.useState(false);
 
   const fetchLotNumbers = async () => {
     try {
       setIsLoadingList(true);
       const response = await axios.get('/api/lot-test-values');
       const uniqueLots = [...new Set(response.data.map((item: any) => item.HeatNo))].filter(Boolean) as string[];
-      setLotNumbers(uniqueLots);
+      setLotNumbers(uniqueLots.sort());
       if (uniqueLots.length > 0 && !selectedLot) {
-        handleLotSelect(uniqueLots[0]);
+        await handleLotSelect(uniqueLots[0]);
       }
     } catch (error) {
       console.error("Failed to fetch lot numbers:", error);
@@ -104,7 +117,7 @@ export default function LotTestValuesPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoadingList(false);
+        setIsLoadingList(false);
     }
   };
 
@@ -118,7 +131,11 @@ export default function LotTestValuesPage() {
 
   const handleLotSelect = async (lotNo: string) => {
     if (!lotNo) return;
-    setSelectedLot(lotNo);-
+    if (isEditing && lotNo !== selectedLot) {
+        toast({ title: "Cancel Edit", description: "Exited edit mode without saving."});
+    }
+    setSelectedLot(lotNo);
+    setIsEditing(false); // Always start in view mode
     setIsLoadingDetails(true);
     setLotData(null);
     try {
@@ -129,7 +146,7 @@ export default function LotTestValuesPage() {
         const structuredData = structureLotData(recordsForLot, lotNo);
         setLotData(structuredData);
       } else {
-        // This is a new lot, so we create a default structure.
+        // This is a new lot, so we create a default structure and enter edit mode
         setLotData({
           Id: 0,
           HeatNo: lotNo,
@@ -140,6 +157,7 @@ export default function LotTestValuesPage() {
           ChemicalComp: [],
           PhysicalProp: [],
         });
+        setIsEditing(true);
       }
     } catch (error) {
       console.error(`Failed to fetch details for lot ${lotNo}:`, error);
@@ -163,17 +181,25 @@ export default function LotTestValuesPage() {
         });
         return;
     }
-    setLotNumbers(prev => [newLotNumber, ...prev]);
+    setLotNumbers(prev => [newLotNumber, ...prev].sort());
     handleLotSelect(newLotNumber);
     setNewLotNumber('');
     setIsAddDialogOpen(false);
   }
 
   const handleSave = async () => {
-    // After saving, we should refetch the data for the current lot
-    // to ensure the form is up-to-date with any backend transformations.
+    setIsEditing(false);
     if(selectedLot){
-        await handleLotSelect(selectedLot);
+        await handleLotSelect(selectedLot); // Refreshes data and resets to view mode
+    }
+  }
+  
+  const handleEditClick = (e: React.MouseEvent, lotNo: string) => {
+    e.stopPropagation(); // Prevent lot selection from firing
+    if (selectedLot !== lotNo) {
+        handleLotSelect(lotNo).then(() => setIsEditing(true));
+    } else {
+        setIsEditing(true);
     }
   }
 
@@ -209,17 +235,32 @@ export default function LotTestValuesPage() {
               ) : (
                 <div className="space-y-1">
                   {filteredLotNumbers.map((lot) => (
-                    <Button
+                    <div
                       key={lot}
-                      variant="ghost"
                       onClick={() => handleLotSelect(lot)}
                       className={cn(
-                        "w-full justify-start text-left",
+                        "w-full justify-start text-left flex items-center pr-2 rounded-md group",
+                        "hover:bg-accent hover:text-accent-foreground cursor-pointer",
                         selectedLot === lot && "bg-accent text-accent-foreground"
                       )}
                     >
-                      {lot}
-                    </Button>
+                      <span className='flex-1 p-2'>{lot}</span>
+                       <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => handleEditClick(e, lot)}
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Edit Lot {lot}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
                   ))}
                 </div>
               )}
@@ -234,7 +275,11 @@ export default function LotTestValuesPage() {
                 <Skeleton className="h-48 w-full" />
              </div>
           ) : lotData ? (
-            <LotTestValueForm initialData={lotData} onSave={handleSave} />
+             <LotTestValueForm 
+                initialData={lotData} 
+                onSave={handleSave}
+                isEditing={isEditing}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground rounded-lg border">
               <p>Select a lot to view or edit its details.</p>

@@ -20,6 +20,7 @@ type TabContextType = {
   addTab: (tab: Omit<Tab, 'content'>) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
+  updateTab: (id: string, updates: Partial<Omit<Tab, 'id'>>) => void;
 };
 
 const TabContext = React.createContext<TabContextType | undefined>(undefined);
@@ -40,37 +41,47 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
   }, [pathname, tabs, activeTab]);
 
   const addTab = (tab: Omit<Tab, 'content'>) => {
-    const existingTab = tabs.find(t => t.id === tab.id);
-    if (!existingTab) {
-      setTabs(prevTabs => [...prevTabs, { ...tab, content: null }]);
-    }
+    setTabs(prevTabs => {
+        const existingTab = prevTabs.find(t => t.id === tab.id);
+        if (existingTab) {
+            return prevTabs;
+        }
+        return [...prevTabs, { ...tab, content: null }];
+    });
     setActiveTab(tab.id);
-    router.push(tab.path);
+    if(pathname !== tab.path) {
+      router.push(tab.path);
+    }
   };
 
   const removeTab = (id: string) => {
     const tabIndex = tabs.findIndex(t => t.id === id);
     if (tabIndex === -1) return;
 
-    let newActiveTabId: string | null = null;
-    if (activeTab === id) {
-      if (tabs.length > 1) {
-        const newActiveTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-        newActiveTabId = tabs[newActiveTabIndex === tabIndex ? tabIndex + 1 : newActiveTabIndex].id;
+    setTabs(prevTabs => {
+      const newTabs = prevTabs.filter(t => t.id !== id);
+      
+      if (activeTab === id) {
+        if (newTabs.length > 0) {
+          const newActiveIndex = Math.max(0, tabIndex - 1);
+          const newActiveTab = newTabs[newActiveIndex];
+          setActiveTab(newActiveTab.id);
+          router.push(newActiveTab.path);
+        } else {
+          setActiveTab(null);
+          router.push('/dashboard'); 
+        }
       }
-    }
+      return newTabs;
+    });
+  };
 
-    setTabs(tabs.filter(t => t.id !== id));
-    
-    if (newActiveTabId) {
-      setActiveTab(newActiveTabId);
-      const newActiveTab = tabs.find(t => t.id === newActiveTabId);
-      if (newActiveTab) {
-        router.push(newActiveTab.path);
-      }
-    } else if (tabs.length === 1) {
-        setActiveTab(null);
-    }
+  const updateTab = (id: string, updates: Partial<Omit<Tab, 'id'>>) => {
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === id ? { ...tab, ...updates } : tab
+      )
+    );
   };
 
   const setTabsWithContent = (id: string, content: React.ReactNode) => {
@@ -87,6 +98,7 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
     addTab,
     removeTab,
     setActiveTab,
+    updateTab,
     setTabsWithContent,
   };
 

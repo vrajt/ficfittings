@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -34,13 +33,15 @@ interface HeatTestFormDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   initialData: TcHeatTest | null;
-  onSave: (item: TcHeatTest) => void;
+  onSave: (item: Omit<TcHeatTest, 'ApsFullDoc' | 'Id'>) => void;
 }
 
 const formSchema = z.object({
   Heat_Code: z.string().min(1, 'Heat Code is required'),
   Heat_Desc: z.string().min(1, 'Heat Test description is required'),
   PId: z.number().optional(),
+  Id: z.number().optional(),
+  _tempId: z.number().optional(),
 });
 
 type HeatTestMasterRecord = {
@@ -100,12 +101,18 @@ export function HeatTestFormDialog({ isOpen, setIsOpen, initialData, onSave }: H
   }, [isOpen, initialData, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const dataToSave = {
-      ...initialData,
-      ...values,
-      PId: initialData?.PId || Date.now(),
-    };
+    const dataToSave: Partial<TcHeatTest> & { _tempId?: number } = { ...values };
+
+    if (isEditMode && initialData) {
+      dataToSave._tempId = (initialData as any)._tempId;
+      dataToSave.PId = initialData.PId;
+    } else {
+      delete dataToSave.PId;
+      delete (dataToSave as any).Id;
+    }
+    
     onSave(dataToSave as TcHeatTest);
+    setIsOpen(false);
   }
 
   return (
@@ -158,5 +165,3 @@ export function HeatTestFormDialog({ isOpen, setIsOpen, initialData, onSave }: H
     </Dialog>
   );
 }
-
-    
