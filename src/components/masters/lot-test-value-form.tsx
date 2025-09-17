@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -39,6 +38,7 @@ const formSchema = z.object({
   Lab_TC_No: z.string().optional(),
   Lab_TC_Date: z.string().optional(),
   ImpactTest: z.array(z.object({
+    Id: z.number().optional(),
     Temperature: z.preprocess((val) => val === '' ? null : Number(val), z.number().nullable()),
     Size: z.string().optional(),
     Value1: z.string().optional(),
@@ -47,14 +47,17 @@ const formSchema = z.object({
     AvgValue: z.string().optional(),
   })),
   ChemicalComp: z.array(z.object({
+    Id: z.number().optional(),
     Element: z.string().min(1, 'Element name is required.'),
-    Value: z.string().optional(),
+    Value: z.string().optional().nullable(),
   })),
   PhysicalProp: z.array(z.object({
+    Id: z.number().optional(),
     Property: z.string(),
     Value: z.string().optional(),
   })),
 });
+
 
 interface LotTestValueFormProps {
   initialData: LotTestValue;
@@ -76,9 +79,9 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
     defaultValues: initialData,
   });
   
-  const { fields: impactFields, append: appendImpact, remove: removeImpact } = useFieldArray({ control: form.control, name: "ImpactTest" });
-  const { fields: chemicalFields, append: appendChemical, remove: removeChemical } = useFieldArray({ control: form.control, name: "ChemicalComp" });
-  const { fields: physicalFields } = useFieldArray({ control: form.control, name: "PhysicalProp" });
+  const { fields: impactFields, replace: impactReplace, append: appendImpact, remove: removeImpact } = useFieldArray({ control: form.control, name: "ImpactTest" });
+  const { fields: chemicalFields, replace: chemicalReplace, append: appendChemical, remove: removeChemical } = useFieldArray({ control: form.control, name: "ChemicalComp" });
+  const { fields: physicalFields, replace: physicalReplace } = useFieldArray({ control: form.control, name: "PhysicalProp" });
   
   React.useEffect(() => {
     async function fetchLabs() {
@@ -97,88 +100,97 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
   }, []);
 
   React.useEffect(() => {
-    const mergeData = (initial: LotTestValue) => {
-        const physicalData = physicalProperties.map(prop => {
-            const found = initial.PhysicalProp?.find(p => p.Property === prop);
-            return found || { Property: prop, Value: '' };
-        });
+    form.setValue("HeatNo", initialData.HeatNo);
+    form.setValue("LabName", initialData.LabName);
+    form.setValue("Lab_TC_No", initialData.Lab_TC_No);
+    form.setValue("Lab_TC_Date", initialData.Lab_TC_Date);
 
-        const chemicalDataMap = new Map<string, { Element: string; Value: string | null }>();
-        standardChemicalElements.forEach(elem => {
-            chemicalDataMap.set(elem, { Element: elem, Value: '' });
-        });
+    const physicalData = physicalProperties.map(prop => {
+        const found = initialData.PhysicalProp?.find(p => p.Property === prop);
+        return { Id: found?.Id, Property: prop, Value: found?.Value || '' };
+    });
+    physicalReplace(physicalData);
 
-        initial.ChemicalComp?.forEach(item => {
-            chemicalDataMap.set(item.Element, item);
-        });
-        
-        const chemicalData = Array.from(chemicalDataMap.values());
-        
-        const impactTestData = initial.ImpactTest?.length > 0 ? initial.ImpactTest : [{
-            Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '',
-        }];
+    const chemicalDataMap = new Map<string, { Id?: number; Element: string; Value: string | null | number; }>();
+     initialData.ChemicalComp?.forEach(item => {
+        chemicalDataMap.set(item.Element, item);
+    });
 
-        return {
-            ...initial,
-            ChemicalComp: chemicalData,
-            PhysicalProp: physicalData,
-            ImpactTest: impactTestData,
-        };
-    };
-    
-    form.reset(mergeData(initialData));
-}, [initialData, form]);
+    const finalChemicalData = standardChemicalElements.map(elem => {
+      return chemicalDataMap.get(elem) || { Element: elem, Value: '' };
+    });
+
+    const additionalChemicals = initialData.ChemicalComp?.filter(
+      c => !standardChemicalElements.includes(c.Element)
+    ) || [];
+
+    chemicalReplace([...finalChemicalData, ...additionalChemicals]);
+
+    const impactTestData = initialData.ImpactTest?.length > 0 
+        ? initialData.ImpactTest 
+        : [{ Id: undefined, Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' }];
+    impactReplace(impactTestData);
+
+}, [initialData, form, chemicalReplace, physicalReplace, impactReplace]);
 
   const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
     const values = form.getValues();
     
-    const impactTestData = values.ImpactTest.length > 0 
-        ? values.ImpactTest[0] 
-        : { Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' };
+    const flatData: any[] = [];
+    
+    const impactTestData = values.ImpactTest.length > 0 ? values.ImpactTest[0] : {
+        Temperature: null,
+        Size: '',
+        Value1: '',
+        Value2: '',
+        Value3: '',
+        AvgValue: '',
+    };
 
     const commonData = {
         HeatNo: values.HeatNo,
         Lab_Name: values.LabName,
         Lab_TC_No: values.Lab_TC_No,
         Lab_TC_Date: values.Lab_TC_Date,
-        ITJ_Temp: impactTestData?.Temperature,
-        ITJ_Size: impactTestData?.Size,
-        ITJ_Value_1: impactTestData?.Value1,
-        ITJ_Value_2: impactTestData?.Value2,
-        ITJ_Value_3: impactTestData?.Value3,
-        ITJ_Value_Avg: impactTestData?.AvgValue,
+        ITJ_Temp: impactTestData.Temperature,
+        ITJ_Size: impactTestData.Size,
+        ITJ_Value_1: impactTestData.Value1,
+        ITJ_Value_2: impactTestData.Value2,
+        ITJ_Value_3: impactTestData.Value3,
+        ITJ_Value_Avg: impactTestData.AvgValue,
     };
-    
-    const flatData: any[] = [];
 
     values.ChemicalComp.forEach(item => {
-        if (item.Element && item.Value) {
+        if(item.Value) {
             flatData.push({
                 ...commonData,
                 Parm_Type: 'CC',
                 Parm_Name: item.Element,
                 Test_ValueC: item.Value || '',
+                Test_ValueN: 0,
             });
         }
     });
 
     values.PhysicalProp.forEach(item => {
-        if (item.Property && item.Value) {
+         if(item.Value) {
             flatData.push({
                 ...commonData,
                 Parm_Type: 'PP',
                 Parm_Name: item.Property,
                 Test_ValueC: item.Value || '',
             });
-        }
+         }
     });
 
-    const hasImpactData = values.ImpactTest.some(item => item.Temperature !== null || item.Size || item.Value1 || item.Value2 || item.Value3 || item.AvgValue);
-    if(hasImpactData) {
-        values.ImpactTest.forEach(item => {
+    values.ImpactTest.forEach(item => {
+        if (item.Temperature !== null || item.Size || item.Value1 || item.Value2 || item.Value3 || item.AvgValue) {
              flatData.push({
-                ...commonData,
+                HeatNo: values.HeatNo,
+                Lab_Name: values.LabName,
+                Lab_TC_No: values.Lab_TC_No,
+                Lab_TC_Date: values.Lab_TC_Date,
                 Parm_Type: 'IT',
                 ITJ_Temp: item.Temperature,
                 ITJ_Size: item.Size,
@@ -186,27 +198,31 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                 ITJ_Value_2: item.Value2,
                 ITJ_Value_3: item.Value3,
                 ITJ_Value_Avg: item.AvgValue,
-            });
-        });
-    }
+             });
+        }
+    });
 
-    // If after all that, flatData is empty but we have common data, push at least one record.
-    if (flatData.length === 0 && values.HeatNo) {
-        flatData.push({ ...commonData, Parm_Type: 'IT' });
-    }
-    
     try {
-        await axios.post('/api/lot-test-values/delete-by-heatno', { heatNo: values.HeatNo });
+        const existingRecordsResponse = await axios.get('/api/lot-test-values');
+        const existingRecordIds = existingRecordsResponse.data
+            .filter((rec: any) => rec.HeatNo === values.HeatNo)
+            .map((rec: any) => rec.Id);
+        
+        if (existingRecordIds.length > 0) {
+          await Promise.all(existingRecordIds.map((id: number) => axios.delete(`/api/lot-test-values/${id}`)));
+        }
 
         if (flatData.length > 0) {
-          await axios.post('/api/lot-test-values/bulk', { records: flatData });
+          await Promise.all(flatData.map(record => axios.post('/api/lot-test-values', record)));
         }
 
         toast({
             title: "Data Saved",
             description: `Test values for lot ${values.HeatNo} have been saved.`,
         });
-        onSave?.();
+        if (onSave) {
+          onSave();
+        }
     } catch (error) {
         console.error("Failed to save lot test values:", error);
         toast({
@@ -330,7 +346,7 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                     ))}
                 </TableBody>
                 </Table>
-                <Button type="button" variant="outline" size="sm" onClick={() => appendImpact({ Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' })} className="mt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => appendImpact({ Id: undefined, Temperature: null, Size: '', Value1: '', Value2: '', Value3: '', AvgValue: '' })} className="mt-2">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Row
                 </Button>
             </CardContent>
@@ -340,7 +356,7 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Chemical Composition (%)</CardTitle>
-                        <Button type="button" size="sm" variant="outline" onClick={() => appendChemical({ Element: '', Value: '' })}>
+                        <Button type="button" size="sm" variant="outline" onClick={() => appendChemical({ Id: undefined, Element: '', Value: '' })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Element
                         </Button>
                     </CardHeader>

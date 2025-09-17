@@ -79,6 +79,7 @@ export interface LotTestValue {
   Lab_TC_No: string;
   Lab_TC_Date: string;
   ImpactTest: {
+    Id?: number;
     Temperature: number | null;
     Size: string;
     Value1: string;
@@ -87,10 +88,12 @@ export interface LotTestValue {
     AvgValue: string;
   }[];
   ChemicalComp: {
+    Id?: number;
     Element: string;
     Value: number | null | string;
   }[];
   PhysicalProp: {
+    Id?: number;
     Property: string;
     Value: string;
   }[];
