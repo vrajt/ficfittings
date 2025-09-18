@@ -146,9 +146,9 @@ export interface TcMain {
     ApsFullDoc: string;
     DocDate: string;
     PoNo: string;
-    PoDate: string;
+    PoDate: null;
     InvNo: string;
-    InvDate: string;
+    InvDate: null;
     AccCode: string;
     AccName: string;
     Address1: string;

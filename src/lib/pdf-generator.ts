@@ -152,7 +152,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Item Description Table ---
   const itemDescriptionBody = [];
-  const requiredRows = 8;
+  const actualItemCount = certificate.items.length;
+  const requiredRows = actualItemCount >= 4 ? actualItemCount : 8;
+
   for (let i = 0; i < requiredRows; i++) {
     const item = certificate.items[i];
     itemDescriptionBody.push([
@@ -176,15 +178,15 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     styles: { lineWidth: 0.2, font: 'helvetica', valign: 'middle', fontSize: 7, cellPadding: 1 },
     headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
     columnStyles: {
-        0: { cellWidth: 10, halign: 'right' },
+        0: { cellWidth: 10, halign: 'center' },
         1: { cellWidth: 15, halign: 'center' },
-        2: { cellWidth: 60, halign: 'left' },
-        3: { cellWidth: 45, halign: 'left' },
-        4: { cellWidth: 45, halign: 'left' },
+        2: { cellWidth: 60, halign: 'center' },
+        3: { cellWidth: 45, halign: 'center' },
+        4: { cellWidth: 45, halign: 'center' },
         5: { cellWidth: 25, halign: 'center' },
         6: { cellWidth: 30, halign: 'center' },
-        7: { cellWidth: 20, halign: 'right' },
-        8: { cellWidth: 22, halign: 'left' }
+        7: { cellWidth: 20, halign: 'center' },
+        8: { cellWidth: 22, halign: 'center' }
     }
   });
 
@@ -329,17 +331,30 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   rightY = (doc as any).lastAutoTable.finalY;
 
   // Heat Test Details
-  const heatTestBody = certificate.heatTreatDetails?.map((test) => [`${test.Heat_Code} - ${test.Heat_Desc}`]);
-  doc.autoTable({
-      head: [['Heat Test Details']],
-      body: heatTestBody,
-      startY: rightY,
-      theme: 'grid',
-      tableWidth: rightColumnWidth,
-      margin: { left: leftMargin + leftColumnWidth },
-      styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'left' },
-      headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: 0, halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1 },
-  });
+const heatTestBody = certificate.heatTreatDetails?.map((test, index) => [
+  `${index + 1}. ${test.Heat_Desc}`
+]);
+
+doc.autoTable({
+  head: [['Heat Test Details']], // only one column
+  body: heatTestBody,
+  startY: rightY,
+  theme: 'grid',
+  tableWidth: rightColumnWidth,
+  margin: { left: leftMargin + leftColumnWidth },
+  styles: { lineWidth: 0.2, fontSize: 7, cellPadding: 1, halign: 'left' },
+  headStyles: { 
+    fontStyle: 'bold', 
+    fillColor: [230, 230, 230], 
+    textColor: 0, 
+    halign: 'center', 
+    valign: 'middle', 
+    fontSize: 7, 
+    cellPadding: 1 
+  },
+});
+
+
   rightY = (doc as any).lastAutoTable.finalY;
   
   // --- Footer Section ---
@@ -354,4 +369,3 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   // Save the PDF
   doc.save(`Certificate-${certificate.ApsFullDoc}.pdf`);
 };
-                   

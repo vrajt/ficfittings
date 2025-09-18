@@ -152,10 +152,10 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemF
                 />
                 <FormField
                     control={form.control}
-                    name="Specification"
+                    name="Size"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Specification</FormLabel>
+                        <FormLabel>Size</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
                         <FormMessage />
                         </FormItem>

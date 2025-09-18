@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -167,9 +166,9 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
       AccName: "",
       AccCode: "",
       PoNo: "",
-      PoDate: new Date().toISOString().split("T")[0],
+      PoDate: "",
       InvNo: "",
-      InvDate: new Date().toISOString().split("T")[0],
+      InvDate: "",
       Address1: "",
       SM_Id: "",
       SM_RM_Name: "",
@@ -253,7 +252,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
             });
     
             setCustomers(customerData);
-             setStartMaterials(materialRes.data.map((item:any) => ({ id: item.Id.toString(), name: item.SM_RM_Name })));
+              setStartMaterials(materialRes.data.map((item:any) => ({ id: item.Id.toString(), name: item.SM_RM_Name })));
             setGrades(gradeRes.data.map((item: any) => ({ id: item.Id.toString(), name: item.GradeName })));
             setDimensionStandards(dimStdRes.data.map((item: any) => ({ id: item.Id.toString(), name: item.DStd_Type })));
             setMtcStandards(mtcStdRes.data.filter((item: any) => item && item.Std_Id != null));
@@ -313,6 +312,28 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
       }
 
     } else if (!isEditMode) {
+      form.reset({
+        DocDate: new Date().toISOString().split("T")[0],
+        PoDate: '',
+        InvDate: '',
+        AccName: "",
+        AccCode: "",
+        PoNo: "",
+        InvNo: "",
+        Address1: "",
+        SM_Id: "",
+        SM_RM_Name: "",
+        BranchId: 1,
+        ApsFullDoc: "",
+        GradeId: "",
+        GradeName: "",
+        DStd_Id: "",
+        DStd_Type: "",
+        Std_Id: "",
+        StandardName: "",
+        TCode: "TC",
+        STCode: "NIMC",
+      });
       const fetchMasterRemarks = async () => {
         try {
           const response = await axios.get('/api/tcremarksfix');
@@ -390,6 +411,15 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
+    // Ensure empty optional dates are sent as null
+    const processedValues: any = { ...values };
+    if (processedValues.PoDate === '') {
+        processedValues.PoDate = null;
+    }
+    if (processedValues.InvDate === '') {
+        processedValues.InvDate = null;
+    }
+
     const cleanArray = (arr: any[], isRemark = false) => arr.map(item => {
         const { _tempId, ...rest } = item;
         
@@ -409,7 +439,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
     try {
         if (isEditMode && initialData) {
             
-            const tcMainData = { ...values };
+            const tcMainData = { ...processedValues };
             delete (tcMainData as any).items;
             delete (tcMainData as any).heatTests;
             delete (tcMainData as any).otherTests;
@@ -430,7 +460,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
             }
         } else {
             const payload = { 
-                ...values, 
+                ...processedValues, 
                 items: items,
                 heatTests: heatTests,
                 otherTests: otherTests,
@@ -445,9 +475,10 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
             addTab({ id: newPath, title: `Edit: ${response.data.TcMain.ApsFullDoc}`, path: newPath });
             setActiveTab(newPath);
         }
-    } catch (error) {
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.error || "An error occurred while saving the certificate.";
         console.error("--- CERT FORM: Submission Error ---", error);
-        toast({ title: "Submission Failed", description: "An error occurred while saving the certificate.", variant: 'destructive' });
+        toast({ title: "Submission Failed", description: errorMessage, variant: 'destructive' });
     } finally {
         setIsSubmitting(false);
     }
@@ -506,7 +537,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
       setHeatTests(prev => prev.filter(t => (t as any)._tempId !== idToDelete));
   }
 
-  const handleSaveHeatTest = (testToSave: Omit<TcHeatTest, 'ApsFullDoc' | 'Id'>) => {
+  const handleSaveHeatTest = (testToSave: Omit<TcHeatTest, 'ApsFullDoc' | 'Id'> & { _tempId?: number }) => {
     setHeatTests(prev => {
       const tempId = (testToSave as any)._tempId;
       const isExisting = editingHeatTest && prev.some(t => (t as any)._tempId === tempId);
@@ -544,7 +575,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
       setOtherTests(prev => prev.filter(t => (t as any)._tempId !== idToDelete));
   }
   
-  const handleSaveOtherTest = (testToSave: Omit<TcOtherTest, 'ApsFullDoc' | 'Id' | 'PId'>) => {
+  const handleSaveOtherTest = (testToSave: Omit<TcOtherTest, 'ApsFullDoc' | 'Id' | 'PId'> & { _tempId?: number }) => {
     setOtherTests(prev => {
       const tempId = (testToSave as any)._tempId;
       const isExisting = editingOtherTest && prev.some(t => (t as any)._tempId === tempId);
@@ -602,7 +633,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
   
   const itemColumns = [
       { accessorKey: 'ProductName', header: 'Product' },
-      { accessorKey: 'Specification', header: 'Specification' },
+      { accessorKey: 'Specification', header: 'Size' },
       { accessorKey: 'Po_Inv_PId', header: 'PO Number' },
       { accessorKey: 'HeatNo', header: 'Heat No.' },
       { accessorKey: 'Qty1', header: 'Quantity' },
