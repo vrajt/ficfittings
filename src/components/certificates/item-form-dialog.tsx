@@ -152,7 +152,7 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemF
                 />
                 <FormField
                     control={form.control}
-                    name="Size"
+                    name="Specification"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Size</FormLabel>

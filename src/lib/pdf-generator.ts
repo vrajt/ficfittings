@@ -258,7 +258,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   }
 
   // Other Tests
-  const otherTestBody = certificate.otherTestDetails?.map((test) => [`${test.Test_Desc} - ${test.Test_Result}`]) || [];
+  const otherTestBody = certificate.otherTestDetails?.map((test) => [`${test.Test_Desc}`]) || [];
   doc.autoTable({
       head: [['Other Test Details']],
       body: otherTestBody,
