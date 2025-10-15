@@ -108,18 +108,18 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
-  const leftMargin = 10;
-  const rightMargin = 10;
+  const leftMargin = 6;
+  const rightMargin = 8;
   const contentStartY = 37;
-  const footerEndY = pageHeight - 24;
+  const footerEndY = pageHeight - 22;
   const contentWidth = pageWidth - leftMargin - rightMargin;
 
 
   // --- Title Header ---
-  doc.setFontSize(12).setFont('helvetica', 'bold');
-  doc.text('TEST CERTIFICATE', pageWidth / 2, 30, { align: 'center'});
-  doc.setFontSize(9).setFont('helvetica', 'normal');
-  doc.text('EN-10204-3.1', pageWidth / 2, 34, { align: 'center' });
+  doc.setFontSize(8).setFont('helvetica', 'bold');
+  doc.text('TEST CERTIFICATE', pageWidth / 2, 32, { align: 'center'});
+  doc.setFontSize(8).setFont('helvetica', 'normal');
+  doc.text('EN-10204-3.1', pageWidth / 2, 36, { align: 'center' });
   
   // --- Main Border ---
   const mainBorderHeight = footerEndY - contentStartY;
@@ -137,7 +137,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   doc.setFontSize(8).setFont('helvetica', 'normal');
   doc.text(`Customer Name: ${certificate.AccName || ''}`, leftMargin + 2, currentY + 5);
-  doc.text(`P.O.No. & Date: ${certificate.PoNo || ''} ${poDate}`, leftMargin + 2, currentY + 9);
+  doc.text(`P.O.No. & Date: ${certificate.PoNo || ''} Date: ${poDate}`, leftMargin + 2, currentY + 9);
  
   
   doc.text(`TC No.: ${certificate.ApsFullDoc || ''}`, midPoint + 15, currentY + 5);
@@ -145,7 +145,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.text(`Start Material: ${certificate.SM_RM_Name || ''}`, midPoint + 15, currentY + 13);
   
   doc.setLineWidth(0.4);
-  doc.line(leftMargin, currentY + topInfoHeight, rightMargin + contentWidth, currentY + topInfoHeight); // Horizontal line
+  doc.line(leftMargin, currentY + topInfoHeight, 6 + contentWidth, currentY + topInfoHeight); // Horizontal line
   doc.line(midPoint, currentY, midPoint, currentY + topInfoHeight); // Vertical line
   
   currentY += topInfoHeight;
@@ -229,42 +229,84 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     });
     leftY = (doc as any).lastAutoTable.finalY;
   }
+if (lotDetailsArray.length > 0) {
+  const physHeader = [
+    'Lot No.',
+    'Y.S (N/mm²)',
+    'U.T.S (N/mm²)',
+    'Elongation %',
+    'RA %',
+    'Hardness'
+  ];
 
- const allPhysProps = Array.from(new Set(
-  lotDetailsArray.flatMap(lot => lot.PhysicalProp.map(pp => pp.Property))
-));
-
-if (lotDetailsArray.length > 0 && allPhysProps.length > 0) {
-  const updatedProps = allPhysProps.map(p =>
-    p === 'Y.S' || p === 'U.T.S' ? `${p} (N/mm²)` : p
-  );
+  // Define flexible key match mapping
+  const propMap = {
+    'Y.S': ['Y.S', 'YS', 'Y.S.'],
+    'U.T.S': ['U.T.S', 'UTS', 'U.T.S.'],
+    'Elongation': ['Elongation', 'Elongation %', 'Elongation(%)'],
+    'RA': ['RA', 'RA %', 'R.A', 'R.A.'],
+    'Hardness': ['Hardness', 'Hardness (BHN)', 'Hardness BHN']
+  };
 
   const physBody = lotDetailsArray.map(lot => {
     const row = [lot.HeatNo];
-    const physMap = new Map(lot.PhysicalProp.map(pp => [pp.Property, pp.Value]));
-    allPhysProps.forEach(propName => row.push(physMap.get(propName) ?? '-'));
+    const physMap = new Map(lot.PhysicalProp.map(pp => [pp.Property.trim(), pp.Value]));
+
+    Object.keys(propMap).forEach(key => {
+      // Try to find any matching property name
+      const value = propMap[key].map(k => physMap.get(k)).find(v => v !== undefined);
+      row.push(value ?? '-');
+    });
+
     return row;
   });
 
-  const physHeader = ['Lot No.', ...updatedProps];
-
   doc.autoTable({
     head: [
-      [{ content: 'Physical Properties', colSpan: physHeader.length, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
-      physHeader
+      [
+        {
+          content: 'Physical Properties',
+          colSpan: physHeader.length,
+          styles: {
+            halign: 'center',
+            fontStyle: 'bold',
+            fillColor: [230, 230, 230],
+          },
+        },
+      ],
+      physHeader,
     ],
     body: physBody,
     startY: leftY,
     theme: 'grid',
     tableWidth: leftColumnWidth,
     margin: { left: leftMargin },
-    styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-    headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0] },
-    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    styles: {
+      lineWidth: 0.4,
+      fontSize: 7,
+      cellPadding: 1,
+      halign: 'center',
+      textColor: [0, 0, 0],
+      lineColor: [0, 0, 0],
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: [230, 230, 230],
+      textColor: [0, 0, 0],
+      halign: 'center',
+      valign: 'middle',
+      fontSize: 7,
+      cellPadding: 1,
+      lineColor: [0, 0, 0],
+    },
+    columnStyles: {
+      0: { halign: 'left', fontStyle: 'bold' },
+    },
   });
 
   leftY = doc.lastAutoTable.finalY;
 }
+
 
 
  const otherTestBody = certificate.otherTestDetails?.map(
@@ -399,7 +441,7 @@ if (otherTestBody.length > 0) {
   
   doc.setFontSize(9).setFont('helvetica', 'normal');
   doc.text('SURVEYOR', leftMargin + 2, footerContentY + 8, { align: 'left' });
-  doc.text(companyTitle, pageWidth - rightMargin - 2, footerContentY-12, { align: 'right' });
+  doc.text(companyTitle, pageWidth - rightMargin - 2, footerContentY-14, { align: 'right' });
   doc.text('Auth. Signatory', pageWidth - rightMargin - 2, footerContentY + 8, { align: 'right' });
 
   // Save the PDF

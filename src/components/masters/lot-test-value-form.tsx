@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -54,6 +55,7 @@ const formSchema = z.object({
   PhysicalProp: z.array(z.object({
     Id: z.number().optional(),
     Property: z.string(),
+    UOM: z.string().optional(),
     Value: z.string().optional(),
   })),
 });
@@ -65,7 +67,7 @@ interface LotTestValueFormProps {
   isEditing: boolean;
 }
 
-const physicalProperties = ['Y.S Mpa', 'U.T.S Mpa', 'Elongation %', 'RA %', 'Hardness BHN'];
+const physicalProperties = ['Y.S', 'U.T.S', 'Elongation %', 'RA %', 'Hardness'];
 const standardChemicalElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
 
 
@@ -107,7 +109,11 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
 
     const physicalData = physicalProperties.map(prop => {
         const found = initialData.PhysicalProp?.find(p => p.Property === prop);
-        return { Id: found?.Id, Property: prop, Value: found?.Value || '' };
+        let uom = found?.UOM || '';
+        if ((prop === 'Y.S' || prop === 'U.T.S') && !uom) {
+            uom = 'N/mm²';
+        }
+        return { Id: found?.Id, Property: prop, UOM: uom, Value: found?.Value || '' };
     });
     physicalReplace(physicalData);
 
@@ -179,6 +185,7 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                 ...commonData,
                 Parm_Type: 'PP',
                 Parm_Name: item.Property,
+                Parm_UOM: item.UOM || '',
                 Test_ValueC: item.Value || '',
             });
          }
@@ -394,6 +401,7 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Property</TableHead>
+                                <TableHead>UOM</TableHead>
                                 <TableHead>Value</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -401,6 +409,7 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                         {physicalFields.map((field, index) => (
                             <TableRow key={field.id}>
                                 <TableCell><FormLabel>{field.Property}</FormLabel></TableCell>
+                                <TableCell><Input {...form.register(`PhysicalProp.${index}.UOM`)} /></TableCell>
                                 <TableCell><Input {...form.register(`PhysicalProp.${index}.Value`)} /></TableCell>
                             </TableRow>
                         ))}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -66,7 +67,7 @@ const structureLotData = (records: any[], lotNo: string): LotTestValue => {
             case 'PP':
             case 'MP':
                  if (rec.Parm_Name && !structuredData.PhysicalProp.some(p => p.Property === rec.Parm_Name)) {
-                    structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC });
+                    structuredData.PhysicalProp.push({ Property: rec.Parm_Name, Value: rec.Test_ValueC, UOM: rec.Parm_UOM });
                 }
                 break;
         }

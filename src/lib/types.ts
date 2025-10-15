@@ -94,8 +94,10 @@ export interface LotTestValue {
   }[];
   PhysicalProp: {
     Id?: number;
+     UOM?: string;
     Property: string;
     Value: string;
+    Parm_UOM?: string;
   }[];
 }
 
