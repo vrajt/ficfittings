@@ -392,22 +392,60 @@ if (otherTestBody.length > 0) {
     ])
   ).filter(row => row.some(cell => cell && cell !== 'N/A'));
   
-  if (impactTestBody.length > 0) {
-      doc.autoTable({
-        head: [
-            [{ content: 'Charpy Impact Test (Joules)', colSpan: 6, styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] } }],
-            ['Size', 'Temp C', 'I', 'II', 'III', 'Average']
-        ],
-        body: impactTestBody,
-        startY: rightY,
-        theme: 'grid',
-        tableWidth: rightColumnWidth,
-        margin: { left: leftMargin + leftColumnWidth },
-        styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0] },
-      });
-      rightY = (doc as any).lastAutoTable.finalY;
-  }
+let impactBody = [];
+
+if (impactTestBody.length > 0) {
+  // Replace null/undefined/empty with '-'
+  impactBody = impactTestBody.map(row =>
+    row.map(cell => {
+      const value = (typeof cell === 'string') ? cell.trim() : cell;
+      return (value === null || value === undefined || value === '') ? '-' : value;
+    })
+  );
+} else {
+  // No data case → show a single row with '-'
+  impactBody = [['-', '-', '-', '-', '-', '-']];
+}
+
+doc.autoTable({
+  head: [
+    [
+      {
+        content: 'Charpy Impact Test (Joules)',
+        colSpan: 6,
+        styles: { halign: 'center', fontStyle: 'bold', fillColor: [230, 230, 230] },
+      },
+    ],
+    ['Size', 'Temp C', 'I', 'II', 'III', 'Average'],
+  ],
+  body: impactBody,
+  startY: rightY,
+  theme: 'grid',
+  tableWidth: rightColumnWidth,
+  margin: { left: leftMargin + leftColumnWidth },
+  styles: {
+    lineWidth: 0.4,
+    fontSize: 7,
+    cellPadding: 1,
+    halign: 'center',
+    textColor: [0, 0, 0],
+    lineColor: [0, 0, 0],
+  },
+  headStyles: {
+    fontStyle: 'bold',
+    fillColor: [230, 230, 230],
+    textColor: [0, 0, 0],
+    halign: 'center',
+    valign: 'middle',
+    fontSize: 7,
+    cellPadding: 1,
+    lineColor: [0, 0, 0],
+  },
+});
+
+rightY = (doc as any).lastAutoTable.finalY;
+
+
 
   const heatTestBody = certificate.heatTreatDetails?.map((test, index) => [
     `${index + 1}. ${test.Heat_Desc}`
