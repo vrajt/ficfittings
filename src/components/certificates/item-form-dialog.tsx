@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -25,7 +24,6 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
 import type { TcItem } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { Input } from '../ui/input';
@@ -49,7 +47,6 @@ const formSchema = z.object({
   _tempId: z.number().optional(),
 });
 
-
 export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemFormDialogProps) {
   const [uomOptions, setUomOptions] = React.useState<{ label: string; value: string }[]>([]);
   const [lotNoOptions, setLotNoOptions] = React.useState<{ label: string; value: string }[]>([]);
@@ -58,12 +55,12 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemF
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        ProductName: '',
-        Specification: '',
-        HeatNo: '',
-        Qty1: 0,
-        Qty1Unit: '',
-        Po_Inv_PId: 0,
+      ProductName: '',
+      Specification: '',
+      HeatNo: '',
+      Qty1: 0,
+      Qty1Unit: '',
+      Po_Inv_PId: 0,
     },
   });
 
@@ -101,32 +98,31 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemF
         form.reset(initialData);
       } else {
         form.reset({
-            ProductName: '',
-            Specification: '',
-            HeatNo: '',
-            Qty1: 0,
-            Qty1Unit: '',
-            Po_Inv_PId: 0,
+          ProductName: '',
+          Specification: '',
+          HeatNo: '',
+          Qty1: 0,
+          Qty1Unit: '',
+          Po_Inv_PId: 0,
         });
       }
     }
   }, [isOpen, initialData, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    
-    let dataToSave: TcItem;
+    const dataToSave: TcItem = initialData
+      ? {
+          ...initialData,
+          ...values,
+          PId: (initialData as any).PId, // update strictly by PId
+        }
+      : (values as TcItem);
 
-    if (isEditMode && initialData) {
-        dataToSave = {
-            ...initialData,
-            ...values,
-            _tempId: initialData._tempId, // Ensure _tempId is preserved
-        };
-    } else {
-         dataToSave = values as TcItem;
+    try {
+      onSave(dataToSave);
+    } finally {
+      setIsOpen(false);
     }
-
-    onSave(dataToSave);
   }
 
   return (
@@ -139,74 +135,74 @@ export function ItemFormDialog({ isOpen, setIsOpen, initialData, onSave }: ItemF
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="ProductName"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Product Name</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="Specification"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Size</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="Po_Inv_PId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PO Number</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="HeatNo"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Heat No.</FormLabel>
+                    <Combobox options={lotNoOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select Heat No..." />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-2">
                 <FormField
-                    control={form.control}
-                    name="ProductName"
-                    render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                        <FormLabel>Product Name</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                  control={form.control}
+                  name="Qty1"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <FormField
-                    control={form.control}
-                    name="Specification"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Size</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                  control={form.control}
+                  name="Qty1Unit"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>UOM</FormLabel>
+                      <Combobox options={uomOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select UOM..." />
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="Po_Inv_PId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>PO Number</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="HeatNo"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Heat No.</FormLabel>
-                            <Combobox options={lotNoOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select Heat No..." />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                    <FormField
-                        control={form.control}
-                        name="Qty1"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Quantity</FormLabel>
-                            <FormControl><Input type="number" {...field} /></FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="Qty1Unit"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>UOM</FormLabel>
-                                <Combobox options={uomOptions} value={field.value || ''} onChange={field.onChange} placeholder="Select UOM..." />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
