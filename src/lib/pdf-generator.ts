@@ -345,20 +345,41 @@ if (otherTestBody.length > 0) {
 
 
   
-    const remarksBody = certificate.remarks.map((remark) => [remark.TcTerms]);
-    if (remarksBody.length > 0) {
-    doc.autoTable({
-        head: [[{ content: 'Remarks', styles: { fontStyle: 'bold' } }]],
-        body: remarksBody,
-        startY: leftY,
-        theme: 'grid',
-        tableWidth: leftColumnWidth,
-        margin: { left: leftMargin },
-        styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0] },
-    });
-    leftY = (doc as any).lastAutoTable.finalY;
-  }
+    const remarksBody = certificate.remarks.map((remark, index) => [
+  `${index + 1}. ${remark.TcTerms}`   // Serial number + remark in same cell
+]);
+
+if (remarksBody.length > 0) {
+  doc.autoTable({
+    head: [[{ content: 'Remarks', styles: { fontStyle: 'bold' } }]],
+    body: remarksBody,
+    startY: leftY,
+    theme: 'grid',
+    tableWidth: leftColumnWidth,
+    margin: { left: leftMargin },
+    styles: {
+      lineWidth: 0.4,
+      fontSize: 7,
+      cellPadding: 1,
+      halign: 'left',
+      textColor: [0, 0, 0],
+      lineColor: [0, 0, 0]
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: [230, 230, 230],
+      textColor: [0, 0, 0],
+      halign: 'center',
+      valign: 'middle',
+      fontSize: 7,
+      cellPadding: 1,
+      lineColor: [0, 0, 0]
+    },
+  });
+
+  leftY = doc.lastAutoTable.finalY;
+}
+
 
   // --- Right Column Tables ---
   let rightY = nestedTableStartY;
