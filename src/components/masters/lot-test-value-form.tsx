@@ -68,7 +68,7 @@ interface LotTestValueFormProps {
 }
 
 const physicalProperties = ['Y.S', 'U.T.S', 'Elongation %', 'RA %', 'Hardness'];
-const standardChemicalElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
+const standardChemicalElements = ['C %', 'Mn%', 'Si%', 'S %', 'P%', 'Cr %', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
 
 
 export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValueFormProps) {
@@ -306,7 +306,14 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
                                 <Calendar
                                     mode="single"
                                     selected={field.value ? new Date(field.value) : undefined}
-                                    onSelect={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                                    onSelect={(date) => {
+                                        if (date) {
+                                            const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+                                                .toISOString()
+                                                .split('T')[0];
+                                            field.onChange(local);
+                                        }
+                                    }}
                                     initialFocus
                                 />
                                 </PopoverContent>
