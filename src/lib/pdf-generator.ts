@@ -113,14 +113,14 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const footerEndY = pageHeight - 22;
   const contentWidth = pageWidth - leftMargin - rightMargin;
 
-  // Title at 35mm; box starts at 40mm so content sits below title. Bottom of box (footerEndY) unchanged.
-  const contentStartY = 40;
+  // Title at 40mm; box starts at 45mm so content sits below title. Bottom of box (footerEndY) unchanged.
+  const contentStartY = 45;
 
   // --- Title Header ---
   doc.setFontSize(8).setFont('helvetica', 'bold');
-  doc.text('TEST CERTIFICATE', pageWidth / 2, 35, { align: 'center'});
+  doc.text('TEST CERTIFICATE', pageWidth / 2, 40, { align: 'center'});
   doc.setFontSize(8).setFont('helvetica', 'normal');
-  doc.text('EN-10204-3.1', pageWidth / 2, 39, { align: 'center' });
+  doc.text('EN-10204-3.1', pageWidth / 2, 44, { align: 'center' });
   
   // --- Main Border ---
   const mainBorderHeight = footerEndY - contentStartY;
