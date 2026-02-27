@@ -110,16 +110,17 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   
   const leftMargin = 6;
   const rightMargin = 8;
-  const contentStartY = 37;
   const footerEndY = pageHeight - 22;
   const contentWidth = pageWidth - leftMargin - rightMargin;
 
+  // Title at 35mm; box starts at 40mm so content sits below title. Bottom of box (footerEndY) unchanged.
+  const contentStartY = 40;
 
   // --- Title Header ---
   doc.setFontSize(8).setFont('helvetica', 'bold');
-  doc.text('TEST CERTIFICATE', pageWidth / 2, 32, { align: 'center'});
+  doc.text('TEST CERTIFICATE', pageWidth / 2, 35, { align: 'center'});
   doc.setFontSize(8).setFont('helvetica', 'normal');
-  doc.text('EN-10204-3.1', pageWidth / 2, 36, { align: 'center' });
+  doc.text('EN-10204-3.1', pageWidth / 2, 39, { align: 'center' });
   
   // --- Main Border ---
   const mainBorderHeight = footerEndY - contentStartY;
@@ -210,10 +211,10 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         0: { halign: 'center' },
         1: { halign: 'center' },
         2: { halign: 'left' },
-        3: { halign: 'left' },
-        4: { halign: 'left' },
+        3: { halign: 'center' },
+        4: { halign: 'center' },
         5: { halign: 'center' },
-        6: { halign: 'left' },
+        6: { halign: 'center' },
         7: { halign: 'center' },
         8: { halign: 'left' }
     }
@@ -380,29 +381,24 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     physY = (doc as any).lastAutoTable?.finalY || physY;
     
     // --- Middle Column: Charpy Impact Test ---
-    const impactTestBody = lotDetailsArray.flatMap(lot => 
-      lot.ImpactTest.map(it => [
-          it.Size ?? 'N/A',
-          it.Temperature ?? 'N/A',
-          it.Value1 ?? 'N/A',
-          it.Value2 ?? 'N/A',
-          it.Value3 ?? 'N/A',
-          it.AvgValue ?? 'N/A'
-      ])
-    ).filter(row => row.some(cell => cell && cell !== 'N/A'));
-    
-    let impactBody = [];
-    
-    if (impactTestBody.length > 0) {
-      impactBody = impactTestBody.map(row =>
-        row.map(cell => {
-          const value = (typeof cell === 'string') ? cell.trim() : cell;
-          return (value === null || value === undefined || value === '') ? '-' : value;
-        })
-      );
-    } else {
-      impactBody = [['-', '-', '-', '-', '-', '-']];
-    }
+    // Ensure one row per lot, matching Physical Properties
+    const impactBody = lotDetailsArray.map(lot => {
+      // Take the first impact test for this lot (or use dashes if none)
+      if (lot.ImpactTest && lot.ImpactTest.length > 0) {
+        const it = lot.ImpactTest[0]; // Use first impact test
+        return [
+          it.Size ?? '-',
+          it.Temperature ?? '-',
+          it.Value1 ?? '-',
+          it.Value2 ?? '-',
+          it.Value3 ?? '-',
+          it.AvgValue ?? '-'
+        ];
+      } else {
+        // No impact test data for this lot - show dashes
+        return ['-', '-', '-', '-', '-', '-'];
+      }
+    });
     
     doc.autoTable({
       head: [
@@ -442,9 +438,18 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     let impactY = (doc as any).lastAutoTable?.finalY || currentY;
     
     // --- Right Column: Heat Test Details ---
-    const heatTestBody = certificate.heatTreatDetails && certificate.heatTreatDetails.length > 0
-      ? certificate.heatTreatDetails.map((test, index) => [`${index + 1}. ${test.Heat_Desc}`])
-      : [['1. Not Applicable']];
+    // Ensure one row per lot, matching Physical Properties
+    // Show one heat test detail per row, or "-" if no more details available
+    const heatTestBody = lotDetailsArray.map((lot, lotIndex) => {
+      if (certificate.heatTreatDetails && certificate.heatTreatDetails.length > 0 && lotIndex < certificate.heatTreatDetails.length) {
+        // Show the corresponding heat test detail for this lot index
+        const test = certificate.heatTreatDetails[lotIndex];
+        return [`${lotIndex + 1}. ${test.Heat_Desc}`];
+      } else {
+        // No more heat test details available for this lot - show "-"
+        return ['-'];
+      }
+    });
     
     doc.autoTable({
         head: [[{ content: 'Heat Test Details', styles: { fontStyle: 'bold' } }]],
