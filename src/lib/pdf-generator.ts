@@ -262,9 +262,13 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     lineColor: [0, 0, 0],
   } as const;
 
-  // Force 5 left + 4 right column widths to sum exactly to contentWidth so the grid edge matches separatorX
-  const itemColWLeft = itemLeftWidth / 5;
-  const itemColWRight = (contentWidth - 5 * itemColWLeft) / 4;
+  // Give Sr.No and P.O. Sr.No narrower widths; keep totals aligned with left/right pane widths.
+  const leftItemColWeights = [0.32, 0.5, 1.45, 1.4, 1.33];
+  const rightItemColWeights = [1.0, 1.3, 0.7, 0.8];
+  const leftItemWeightTotal = leftItemColWeights.reduce((sum, weight) => sum + weight, 0);
+  const rightItemWeightTotal = rightItemColWeights.reduce((sum, weight) => sum + weight, 0);
+  const leftItemColWidths = leftItemColWeights.map((weight) => (itemLeftWidth * weight) / leftItemWeightTotal);
+  const rightItemColWidths = rightItemColWeights.map((weight) => (itemRightWidth * weight) / rightItemWeightTotal);
 
   doc.autoTable({
     head: [
@@ -288,15 +292,15 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     styles: itemTableStyles,
     headStyles: itemHeadStyles,
     columnStyles: {
-      0: { halign: 'center', cellWidth: itemColWLeft },
-      1: { halign: 'center', cellWidth: itemColWLeft },
-      2: { halign: 'left', cellWidth: itemColWLeft },
-      3: { halign: 'center', cellWidth: itemColWLeft },
-      4: { halign: 'center', cellWidth: itemColWLeft },
-      5: { halign: 'center', cellWidth: itemColWRight },
-      6: { halign: 'center', cellWidth: itemColWRight },
-      7: { halign: 'center', cellWidth: itemColWRight },
-      8: { halign: 'left', cellWidth: itemColWRight },
+      0: { halign: 'center', cellWidth: leftItemColWidths[0] },
+      1: { halign: 'center', cellWidth: leftItemColWidths[1] },
+      2: { halign: 'left', cellWidth: leftItemColWidths[2] },
+      3: { halign: 'center', cellWidth: leftItemColWidths[3] },
+      4: { halign: 'center', cellWidth: leftItemColWidths[4] },
+      5: { halign: 'center', cellWidth: rightItemColWidths[0] },
+      6: { halign: 'center', cellWidth: rightItemColWidths[1] },
+      7: { halign: 'center', cellWidth: rightItemColWidths[2] },
+      8: { halign: 'left', cellWidth: rightItemColWidths[3] },
     },
   });
   const itemSectionEndY = (doc as any).lastAutoTable?.finalY || itemTableStartY;
