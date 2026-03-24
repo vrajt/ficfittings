@@ -104,6 +104,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     unit: 'mm',
     format: 'a4',
   }) as jsPDFWithAutoTable;
+  doc.setFont('times', 'normal');
 
   const allLotData = await fetchAllLotDetails();
   // Keep a deterministic item order for PDF (same order basis across item table + lot sections).
@@ -130,7 +131,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const footerEndY = pageHeight - 22;
   const contentWidth = pageWidth - leftMargin - rightMargin;
   // Left pane (item cols 1–5, chem, phys|charpy) vs right (Size…UOM, lab, heat). Wider left = separator further right; right columns get less width.
-  const itemLeftRatio = 0.625;
+  const itemLeftRatio = 0.67;
   const itemLeftWidth = contentWidth * itemLeftRatio;
   const itemRightWidth = contentWidth - itemLeftWidth;
   const separatorX = leftMargin + itemLeftWidth;
@@ -139,9 +140,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const contentStartY = 45;
 
   // --- Title Header ---
-  doc.setFontSize(8).setFont('helvetica', 'bold');
+  doc.setFontSize(9).setFont('times', 'bold');
   doc.text('TEST CERTIFICATE', pageWidth / 2, 40, { align: 'center'});
-  doc.setFontSize(8).setFont('helvetica', 'normal');
+  doc.setFontSize(9).setFont('times', 'normal');
   doc.text('EN-10204-3.1', pageWidth / 2, 44, { align: 'center' });
   
   // --- Main Border ---
@@ -155,32 +156,32 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const poDate = certificate.PoDate ? format(new Date(certificate.PoDate), 'dd/MM/yyyy') : '';
   const docDate = certificate.DocDate ? format(new Date(certificate.DocDate), 'dd/MM/yyyy') : '';
   const invDate = certificate.InvDate ? format(new Date(certificate.InvDate), 'dd/MM/yyyy') : '';
-  const topInfoHeight = 10;
+  const topInfoHeight = 12;
   const midPoint = leftMargin + contentWidth / 2;
 
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   
   // Left side - Customer Name
-  doc.setFont('helvetica', 'bold');
-  doc.text('Customer Name:', leftMargin + 2, currentY + 5);
+  doc.setFont('times', 'bold');
+  doc.text('Customer Name:', leftMargin + 2, currentY + 4.5);
   const customerNameLabelWidth = doc.getTextWidth('Customer Name:');
   const leftLabelDividerX = leftMargin + 2 + Math.max(customerNameLabelWidth, doc.getTextWidth('P.O.No. & Date:')) + 2.5;
-  doc.setFont('helvetica', 'normal');
-  doc.text(certificate.AccName || '', leftLabelDividerX + 2, currentY + 5);
+  doc.setFont('times', 'normal');
+  doc.text(certificate.AccName || '', leftLabelDividerX + 2, currentY + 4.5);
   
   // P.O.No. & Date
-  doc.setFont('helvetica', 'bold');
-  doc.text('P.O.No. & Date:', leftMargin + 2, currentY + 9);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${certificate.PoNo || ''} Date: ${poDate}`, leftLabelDividerX + 2, currentY + 9);
+  doc.setFont('times', 'bold');
+  doc.text('P.O.No. & Date:', leftMargin + 2, currentY + 10.5);
+  doc.setFont('times', 'normal');
+  doc.text(`${certificate.PoNo || ''} Date: ${poDate}`, leftLabelDividerX + 2, currentY + 10.5);
  
   // Right side - TC No. and Date on the same line
-  doc.setFont('helvetica', 'bold');
-  doc.text('TC No.:', midPoint + 2, currentY + 5);
+  doc.setFont('times', 'bold');
+  doc.text('TC No.:', midPoint + 2, currentY + 4.5);
   const tcNoLabelWidth = doc.getTextWidth('TC No.:');
   const rightLabelDividerX = midPoint + 2 + Math.max(tcNoLabelWidth, doc.getTextWidth('Start Material:')) + 2.5;
-  doc.setFont('helvetica', 'normal');
-  doc.text(certificate.ApsFullDoc || '', rightLabelDividerX + 2, currentY + 5);
+  doc.setFont('times', 'normal');
+  doc.text(certificate.ApsFullDoc || '', rightLabelDividerX + 2, currentY + 4.5);
   
   const dateText = `Date: ${docDate}`;
   const dateColumnRightX = leftMargin + contentWidth;
@@ -189,15 +190,15 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     rightLabelDividerX + 18,
     dateColumnRightX - doc.getTextWidth(dateText) - 4,
   );
-  doc.setFont('helvetica', 'normal');
-  doc.text(dateText, rightTopEndX, currentY + 5, { align: 'right' });
+  doc.setFont('times', 'normal');
+  doc.text(dateText, rightTopEndX, currentY + 4.5, { align: 'right' });
   
   // Start Material
-  doc.setFont('helvetica', 'bold');
-  doc.text('Start Material:', midPoint + 2, currentY + 9);
+  doc.setFont('times', 'bold');
+  doc.text('Start Material:', midPoint + 2, currentY + 10.5);
   const startMaterialLabelWidth = doc.getTextWidth('Start Material:');
-  doc.setFont('helvetica', 'normal');
-  doc.text(certificate.SM_RM_Name || '', rightLabelDividerX + 2, currentY + 9);
+  doc.setFont('times', 'normal');
+  doc.text(certificate.SM_RM_Name || '', rightLabelDividerX + 2, currentY + 10.5);
   
   doc.setLineWidth(0.4);
   // Internal row divider so top details appear in a clear 2x2 grid.
@@ -205,8 +206,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.line(leftMargin, currentY + topInfoHeight, leftMargin + contentWidth, currentY + topInfoHeight); // Horizontal line
   doc.line(leftLabelDividerX, currentY, leftLabelDividerX, currentY + topInfoHeight); // Left label/value separator
   doc.line(rightLabelDividerX, currentY, rightLabelDividerX, currentY + topInfoHeight); // Right label/value separator
-  doc.line(dateColumnLeftX, currentY, dateColumnLeftX, currentY + 6); // Date column left border
-  doc.line(dateColumnRightX, currentY, dateColumnRightX, currentY + 6); // Date column right border
+  doc.line(dateColumnLeftX, currentY, dateColumnLeftX, currentY + 6); // Date column left border (top row)
+  doc.line(dateColumnRightX, currentY, dateColumnRightX, currentY + 6); // Date column right border (top row)
   doc.line(midPoint, currentY, midPoint, currentY + topInfoHeight); // Vertical line
   
   currentY += topInfoHeight;
@@ -236,7 +237,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  const requiredRows = orderedItems.length < 4 ? 8 : orderedItems.length;
+  // Target 6 visible item rows; if content density is high, fall back to 5 to avoid overflow.
+  const baseRows = orderedItems.length < 6 ? 6 : orderedItems.length;
+  const requiredRows = lotDetailsArray.length >= 3 && baseRows === 6 ? 5 : baseRows;
   const itemTableStartY = currentY;
 
   for (let i = 0; i < requiredRows; i++) {
@@ -256,9 +259,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   const itemTableStyles = {
     lineWidth: 0.4,
-    font: 'helvetica',
+    font: 'times',
     valign: 'middle',
-    fontSize: 7,
+    fontSize: 8,
     cellPadding: 1,
     textColor: [0, 0, 0],
     lineColor: [0, 0, 0],
@@ -269,8 +272,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     textColor: [0, 0, 0],
     halign: 'center',
     valign: 'middle',
-    fontSize: 7,
-    cellPadding: 1,
+    fontSize: 9,
+    cellPadding: 0.7,
+    minCellHeight: 7.2,
     lineColor: [0, 0, 0],
   } as const;
 
@@ -281,6 +285,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const rightItemWeightTotal = rightItemColWeights.reduce((sum, weight) => sum + weight, 0);
   const leftItemColWidths = leftItemColWeights.map((weight) => (itemLeftWidth * weight) / leftItemWeightTotal);
   const rightItemColWidths = rightItemColWeights.map((weight) => (itemRightWidth * weight) / rightItemWeightTotal);
+  // Exact split position after "Dimension Standard" based on real rendered widths.
+  const itemSplitX = leftMargin + leftItemColWidths.reduce((sum, width) => sum + width, 0);
 
   doc.autoTable({
     head: [
@@ -291,7 +297,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         'Material Specification',
         'Dimension Standard',
         'Size',
-        'Heat No / Lot No.',
+        'Lot No.',
         'Qty',
         'UOM',
       ],
@@ -312,7 +318,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       5: { halign: 'center', cellWidth: rightItemColWidths[0] },
       6: { halign: 'center', cellWidth: rightItemColWidths[1] },
       7: { halign: 'center', cellWidth: rightItemColWidths[2] },
-      8: { halign: 'left', cellWidth: rightItemColWidths[3] },
+      8: { halign: 'center', cellWidth: rightItemColWidths[3] },
     },
   });
   const itemSectionEndY = (doc as any).lastAutoTable?.finalY || itemTableStartY;
@@ -356,14 +362,14 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     for (let ci = 0; ci < chemHeader.length; ci++) {
       chemColumnStyles[ci] = {
         cellWidth: chemCellW,
-        halign: ci === 0 ? 'left' : 'center',
+        halign: 'center',
         ...(ci === 0 ? { fontStyle: 'bold' } : {}),
       };
     }
 
     doc.autoTable({
         head: [
-          [{ content: 'Chemical Composition', colSpan: chemHeader.length, styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255] } }],
+          [{ content: 'Chemical Composition', colSpan: chemHeader.length, styles: { halign: 'center', fontStyle: 'bold', font: 'times', fontSize: 9, fillColor: [255, 255, 255] } }],
           chemHeader
         ],
         body: chemBody,
@@ -371,8 +377,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         theme: 'grid',
         tableWidth: itemLeftWidth,
         margin: { left: leftMargin },
-        styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0] },
+        styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+        headStyles: { font: 'times', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0] },
         columnStyles: chemColumnStyles,
     });
     chemY = (doc as any).lastAutoTable?.finalY || chemY;
@@ -384,16 +390,16 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   if (labBody.length > 0) {
     doc.autoTable({
       head: [
-        [{ content: 'Laboratory Details', colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255] } }],
+        [{ content: 'Laboratory Details', colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', font: 'times', fontSize: 9, fillColor: [255, 255, 255] } }],
         ['Report No.', 'Report Date', 'Laboratory Name'],
       ],
       body: labBody,
       startY: rightStackY,
       theme: 'grid',
       tableWidth: itemRightWidth,
-      margin: { left: separatorX },
-      styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-      headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0] },
+      margin: { left: itemSplitX },
+      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      headStyles: { font: 'times', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0] },
     });
     rightStackY = (doc as any).lastAutoTable?.finalY || rightStackY;
   }
@@ -404,15 +410,16 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       startY: rightStackY,
       theme: 'grid',
       tableWidth: itemRightWidth,
-      margin: { left: separatorX },
-      styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      margin: { left: itemSplitX },
+      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
       headStyles: {
+        font: 'times',
         fontStyle: 'bold',
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
         halign: 'center',
         valign: 'middle',
-        fontSize: 7,
+        fontSize: 8,
         cellPadding: 1,
         lineColor: [0, 0, 0],
       },
@@ -468,11 +475,11 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     const hardnessHeader = getPhysicalHeaderFromFirstLot(propMap['Hardness'], 'Hardness');
     const physHeader = [
       'Lot No.',
-      ysHeader.uom ? `${ysHeader.name} ${ysHeader.uom}` : ysHeader.name,
-      utsHeader.uom ? `${utsHeader.name} ${utsHeader.uom}` : utsHeader.name,
-      elongHeader.uom ? `${elongHeader.name} ${elongHeader.uom}` : elongHeader.name,
-      raHeader.uom ? `${raHeader.name} ${raHeader.uom}` : raHeader.name,
-      hardnessHeader.uom ? `${hardnessHeader.name} ${hardnessHeader.uom}` : hardnessHeader.name,
+      ysHeader.uom ? `${ysHeader.name}\n${ysHeader.uom}` : ysHeader.name,
+      utsHeader.uom ? `${utsHeader.name}\n${utsHeader.uom}` : utsHeader.name,
+      'Elongation%',
+      raHeader.uom ? `${raHeader.name}\n${raHeader.uom}` : raHeader.name,
+      hardnessHeader.uom ? `${hardnessHeader.name}\n${hardnessHeader.uom}` : hardnessHeader.name,
     ];
 
     const physBody = lotDetailsArray.map((lot) => {
@@ -510,16 +517,15 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     ]);
 
     const charpySubHead = ['Size:', 'TEMP C', 'I', 'II', 'III', 'Average'];
-    // Rebalance widths so common physical values stay on one line.
-    const physColumnWeights = [1.35, 1.15, 1.2, 1.05, 0.85, 1.4];
-    const charpyColumnWeights = [0.95, 1.0, 0.7, 0.7, 0.7, 0.95];
-    const physCharpyColWeights = [...physColumnWeights, ...charpyColumnWeights];
-    const physCharpyWeightTotal = physCharpyColWeights.reduce((sum, w) => sum + w, 0);
+    // Balanced fixed widths for stable layout/readability.
+    // [Lot No, Y.S, U.T.S, Elong, RA, Hardness, Size, TEMP C, I, II, III, Average]
+    const physCharpyColWeights = [0.95, 1.1, 1.15, 1.15, 0.9, 1.2, 1.15, 0.9, 0.65, 0.65, 0.65, 0.85];
+    const physCharpyWeightTotal = physCharpyColWeights.reduce((sum, weight) => sum + weight, 0);
     const physCharpyColumnStyles: Record<number, { cellWidth: number; halign: 'left' | 'center'; fontStyle?: 'bold' }> = {};
     for (let c = 0; c < physCharpyColWeights.length; c++) {
       physCharpyColumnStyles[c] = {
         cellWidth: (itemLeftWidth * physCharpyColWeights[c]) / physCharpyWeightTotal,
-        halign: c === 0 ? 'left' : 'center',
+        halign: 'center',
         ...(c === 0 ? { fontStyle: 'bold' } : {}),
       };
     }
@@ -534,13 +540,15 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
             styles: {
               halign: 'center',
               fontStyle: 'bold',
+              font: 'times',
+              fontSize: 9,
               fillColor: [255, 255, 255],
             },
           },
           {
             content: 'Charpy Impact Test (Joules)',
             colSpan: 6,
-            styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255] },
+            styles: { halign: 'center', fontStyle: 'bold', font: 'times', fontSize: 9, fillColor: [255, 255, 255] },
           },
         ],
         [...physHeader, ...charpySubHead],
@@ -552,19 +560,21 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       margin: { left: leftMargin },
       styles: {
         lineWidth: 0.4,
-        fontSize: 7,
+        font: 'times',
+        fontSize: 8,
         cellPadding: 1,
         halign: 'center',
         textColor: [0, 0, 0],
         lineColor: [0, 0, 0],
       },
       headStyles: {
+        font: 'times',
         fontStyle: 'bold',
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
         halign: 'center',
         valign: 'middle',
-        fontSize: 7,
+        fontSize: 8,
         cellPadding: 1,
         lineColor: [0, 0, 0],
       },
@@ -578,7 +588,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const midSectionEndY = Math.max(leftColumnEndY, rightPaneBottomY);
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.7);
-  doc.line(separatorX, itemTableStartY, separatorX, midSectionEndY);
+  doc.line(itemSplitX, itemTableStartY, itemSplitX, midSectionEndY);
   doc.setLineWidth(0.4);
 
   currentY = midSectionEndY;
@@ -597,14 +607,14 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       theme: 'grid',
       tableWidth: contentWidth,
       margin: { left: leftMargin, right: rightMargin },
-      styles: { lineWidth: 0.4, fontSize: 7, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
       headStyles: {
         fontStyle: 'bold',
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
         halign: 'left',
         valign: 'middle',
-        fontSize: 7,
+        fontSize: 8,
         cellPadding: 1,
         lineColor: [0, 0, 0],
       },
@@ -633,8 +643,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         theme: 'plain',
         tableWidth: remarksColumnWidth,
         margin: { left: leftMargin },
-        styles: { lineWidth: 0, fontSize: 7, cellPadding: 1, halign: 'left', textColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 7, cellPadding: 1, lineWidth: 0 },
+        styles: { lineWidth: 0, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0] },
+        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 8, cellPadding: 1, lineWidth: 0 },
         bodyStyles: { lineWidth: 0 },
     });
   }
@@ -654,7 +664,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.line(surveyorColumnEndX, remarksStartY, surveyorColumnEndX, footerLineY); // Right border
   
   // Write "SURVEYOR" text at the bottom, touching footer
-  doc.setFontSize(9).setFont('helvetica', 'bold');
+  doc.setFontSize(9).setFont('times', 'bold');
   const surveyorTextX = surveyorColumnStartX + (surveyorColumnWidth / 2);
   doc.text('SURVEYOR', surveyorTextX, footerLineY - 2, { align: 'center' });
   
@@ -664,7 +674,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const companyTitleY = remarksStartY + 4;
   const signatureY = footerLineY - 12;
   
-  doc.setFontSize(9).setFont('helvetica', 'normal');
+  doc.setFontSize(9).setFont('times', 'normal');
   doc.text(companyTitle, rightColumnStartX + signatureColumnWidth - 2, companyTitleY, { align: 'right' });
   doc.text('Auth. Signatory', rightColumnStartX + signatureColumnWidth - 2, signatureY + 8, { align: 'right' });
 
