@@ -237,9 +237,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  // Target 6 visible item rows; if content density is high, fall back to 5 to avoid overflow.
-  const baseRows = orderedItems.length < 6 ? 6 : orderedItems.length;
-  const requiredRows = lotDetailsArray.length >= 3 && baseRows === 6 ? 5 : baseRows;
+  // If items are less than 5, keep 6 visible lines; otherwise use actual count.
+  const requiredRows = orderedItems.length < 5 ? 6 : orderedItems.length;
   const itemTableStartY = currentY;
 
   for (let i = 0; i < requiredRows; i++) {
