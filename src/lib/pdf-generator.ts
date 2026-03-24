@@ -140,8 +140,10 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const contentStartY = 45;
 
   // --- Title Header ---
-  doc.setFontSize(9).setFont('times', 'bold');
+  doc.setFontSize(10).setFont('times', 'bold');
   doc.text('TEST CERTIFICATE', pageWidth / 2, 40, { align: 'center'});
+  // Draw once more with tiny offset to make title visually bolder.
+  doc.text('TEST CERTIFICATE', pageWidth / 2 + 0.1, 40, { align: 'center'});
   doc.setFontSize(9).setFont('times', 'normal');
   doc.text('EN-10204-3.1', pageWidth / 2, 44, { align: 'center' });
   
@@ -626,9 +628,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   }
 
   // --- Three-Column Layout: Remarks, Surveyor and Signature (at footer) ---
-  const remarksColumnWidth = contentWidth * 0.40;
-  const surveyorColumnWidth = contentWidth * 0.25;
-  const signatureColumnWidth = contentWidth * 0.35;
+  const remarksColumnWidth = contentWidth * 0.43;
+  const surveyorColumnWidth = contentWidth * 0.28;
+  const signatureColumnWidth = contentWidth * 0.29;
   const remarksStartY = currentY;
   const footerLineY = footerEndY; // Footer line position
 
@@ -642,8 +644,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         theme: 'plain',
         tableWidth: remarksColumnWidth,
         margin: { left: leftMargin },
-        styles: { lineWidth: 0, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 8, cellPadding: 1, lineWidth: 0 },
+        // Slightly larger vertical padding improves readability when a remark wraps to next line.
+        styles: { lineWidth: 0, font: 'times', fontSize: 8, cellPadding: { top: 1.2, right: 1, bottom: 1.2, left: 1 }, halign: 'left', textColor: [0, 0, 0] },
+        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 8, cellPadding: { top: 1, right: 1, bottom: 1, left: 1 }, lineWidth: 0 },
         bodyStyles: { lineWidth: 0 },
     });
   }
@@ -653,29 +656,32 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.setLineWidth(0.4);
   doc.rect(leftMargin, remarksStartY, remarksColumnWidth, footerLineY - remarksStartY);
 
-  // --- Middle Column: Surveyor (just column with text at footer) ---
+  // --- Middle Column: Surveyor ---
   const surveyorColumnStartX = leftMargin + remarksColumnWidth;
   const surveyorColumnEndX = surveyorColumnStartX + surveyorColumnWidth;
+  // --- Right Column: Company Title and Auth. Signatory ---
+  const signatureColumnStartX = surveyorColumnEndX;
+  const signatureColumnEndX = signatureColumnStartX + signatureColumnWidth;
   
   // Draw column borders
   doc.setLineWidth(0.4);
-  doc.line(surveyorColumnStartX, remarksStartY, surveyorColumnStartX, footerLineY); // Left border
-  doc.line(surveyorColumnEndX, remarksStartY, surveyorColumnEndX, footerLineY); // Right border
+  doc.line(surveyorColumnStartX, remarksStartY, surveyorColumnStartX, footerLineY); // Surveyor left border
+  doc.line(surveyorColumnEndX, remarksStartY, surveyorColumnEndX, footerLineY); // Surveyor right border / Signature left
+  doc.line(signatureColumnEndX, remarksStartY, signatureColumnEndX, footerLineY); // Signature right border
   
-  // Write "SURVEYOR" text at the bottom, touching footer
+  // Keep SURVEYOR in middle column, nudged slightly right.
   doc.setFontSize(9).setFont('times', 'bold');
-  const surveyorTextX = surveyorColumnStartX + (surveyorColumnWidth / 2);
+  const surveyorTextX = surveyorColumnStartX + (surveyorColumnWidth / 2) + 4;
   doc.text('SURVEYOR', surveyorTextX, footerLineY - 2, { align: 'center' });
   
   // --- Right Column: Company Title and Auth. Signatory (at footer, above footer line) ---
   const companyTitle = certificate.BranchId == 2 ? "For FORGED INDUSTRIAL CORPORATION" : "For NEW INDIA MANUFACTURING CO";
-  const rightColumnStartX = leftMargin + remarksColumnWidth + surveyorColumnWidth;
   const companyTitleY = remarksStartY + 4;
   const signatureY = footerLineY - 12;
   
   doc.setFontSize(9).setFont('times', 'normal');
-  doc.text(companyTitle, rightColumnStartX + signatureColumnWidth - 2, companyTitleY, { align: 'right' });
-  doc.text('Auth. Signatory', rightColumnStartX + signatureColumnWidth - 2, signatureY + 8, { align: 'right' });
+  doc.text(companyTitle, signatureColumnStartX + signatureColumnWidth - 2, companyTitleY, { align: 'right' });
+  doc.text('Auth. Signatory', signatureColumnStartX + signatureColumnWidth - 2, signatureY + 8, { align: 'right' });
 
   // Save the PDF
   doc.save(`Certificate-${certificate.ApsFullDoc}.pdf`);
