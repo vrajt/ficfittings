@@ -106,8 +106,20 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   }) as jsPDFWithAutoTable;
 
   const allLotData = await fetchAllLotDetails();
-  const firstItemHeatNo = certificate.items.find((item) => (item.HeatNo || '').trim())?.HeatNo?.trim() || '';
-  const uniqueHeatNos = [...new Set(certificate.items.map(item => item.HeatNo).filter(Boolean))];
+  // Keep a deterministic item order for PDF (same order basis across item table + lot sections).
+  // Prefer PId when present, otherwise preserve incoming order.
+  const orderedItems = [...certificate.items]
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aPidRaw = Number(a.item.PId);
+      const bPidRaw = Number(b.item.PId);
+      const aPid = Number.isFinite(aPidRaw) ? aPidRaw : Number.MAX_SAFE_INTEGER;
+      const bPid = Number.isFinite(bPidRaw) ? bPidRaw : Number.MAX_SAFE_INTEGER;
+      return aPid === bPid ? a.index - b.index : aPid - bPid;
+    })
+    .map(({ item }) => item);
+  const firstItemHeatNo = orderedItems.find((item) => (item.HeatNo || '').trim())?.HeatNo?.trim() || '';
+  const uniqueHeatNos = [...new Set(orderedItems.map(item => item.HeatNo).filter(Boolean))];
   const lotDetailsArray = uniqueHeatNos.map(heatNo => getLotDetails(allLotData, heatNo as string)).filter(Boolean) as LotTestValue[];
   
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -224,11 +236,11 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  const requiredRows = certificate.items.length < 4 ? 8 : certificate.items.length;
+  const requiredRows = orderedItems.length < 4 ? 8 : orderedItems.length;
   const itemTableStartY = currentY;
 
   for (let i = 0; i < requiredRows; i++) {
-    const item = certificate.items[i];
+    const item = orderedItems[i];
     itemDescriptionBody.push([
       item ? i + 1 : '',
       item ? item.Po_Inv_PId || '' : '',
@@ -263,7 +275,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   } as const;
 
   // Give Sr.No and P.O. Sr.No narrower widths; keep totals aligned with left/right pane widths.
-  const leftItemColWeights = [0.32, 0.5, 1.45, 1.4, 1.33];
+  const leftItemColWeights = [0.28, 0.44, 1.78, 1.2, 1.1];
   const rightItemColWeights = [1.0, 1.3, 0.7, 0.8];
   const leftItemWeightTotal = leftItemColWeights.reduce((sum, weight) => sum + weight, 0);
   const rightItemWeightTotal = rightItemColWeights.reduce((sum, weight) => sum + weight, 0);
@@ -309,22 +321,20 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   let rightPaneBottomY = itemSectionEndY;
   let chemY = itemSectionEndY;
   
-  const standardChemicalElements = ['C%', 'Mn%', 'Si%', 'S%', 'P%', 'Cr%', 'Ni%', 'Mo%', 'Cu%', 'V%', 'CE%'];
-  const allChemElementsFromData = Array.from(new Set(lotDetailsArray.flatMap(lot => lot.ChemicalComp.map(cc => cc.Element))));
-  // Remove duplicates - normalize element names
-  const normalizedElements = new Set<string>();
-  standardChemicalElements.forEach(el => normalizedElements.add(el));
-  allChemElementsFromData.forEach(el => {
-    const normalized = el.trim().replace(/\s+/g, '');
-    const exists = Array.from(normalizedElements).some(existing => {
-      const existingNorm = existing.replace(/\s+/g, '');
-      return existingNorm === normalized || (existingNorm.replace(/%/g, '') === normalized.replace(/%/g, ''));
+  // Keep chemical columns in first-seen data order across lots (no hardcoded standard ordering).
+  const allChemElements: string[] = [];
+  const seenChemElements = new Set<string>();
+  lotDetailsArray.forEach((lot) => {
+    lot.ChemicalComp.forEach((cc) => {
+      const rawElement = (cc.Element || '').trim();
+      if (!rawElement) return;
+      const normalized = rawElement.replace(/\s+/g, '').replace(/%/g, '').toLowerCase();
+      if (!seenChemElements.has(normalized)) {
+        seenChemElements.add(normalized);
+        allChemElements.push(rawElement);
+      }
     });
-    if (!exists) {
-      normalizedElements.add(el);
-    }
   });
-  const allChemElements = Array.from(normalizedElements);
   
   if (lotDetailsArray.length > 0 && allChemElements.length > 0) {
     const chemBody = lotDetailsArray.map(lot => {
