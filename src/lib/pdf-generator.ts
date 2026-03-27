@@ -149,7 +149,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   
   // --- Main Border ---
   const mainBorderHeight = footerEndY - contentStartY;
-  doc.setLineWidth(0.5);
+  // Use the same border weight as the tables everywhere (except the main separator line).
+  doc.setLineWidth(0.4);
   doc.rect(leftMargin, contentStartY, contentWidth, mainBorderHeight);
 
   let currentY = contentStartY;
@@ -182,8 +183,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.text('TC No.:', midPoint + 2, currentY + 4.5);
   const tcNoLabelWidth = doc.getTextWidth('TC No.:');
   const rightLabelDividerX = midPoint + 2 + Math.max(tcNoLabelWidth, doc.getTextWidth('Start Material:')) + 2.5;
-  doc.setFont('times', 'normal');
+  doc.setFont('times', 'bold');
   doc.text(certificate.ApsFullDoc || '', rightLabelDividerX + 2, currentY + 4.5);
+  doc.setFont('times', 'normal');
   
   const dateText = `Date: ${docDate}`;
   const dateColumnRightX = leftMargin + contentWidth;
@@ -222,9 +224,10 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     ])
     .filter((row) => row.some((cell) => cell));
 
+  // Keep right-side heat rows aligned with lot-based rows on the left.
   const heatTestBodyForRightPane =
     lotDetailsArray.length > 0
-      ? lotDetailsArray.map((lot, lotIndex) => {
+      ? lotDetailsArray.map((_, lotIndex) => {
           if (
             certificate.heatTreatDetails &&
             certificate.heatTreatDetails.length > 0 &&
@@ -233,7 +236,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
             const test = certificate.heatTreatDetails[lotIndex];
             return [`${lotIndex + 1}. ${test.Heat_Desc}`];
           }
-          return ['-'];
+          return [''];
         })
       : [];
 
@@ -381,6 +384,13 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
         headStyles: { font: 'times', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0] },
         columnStyles: chemColumnStyles,
+        didParseCell: (hookData: any) => {
+          // Make the border between Chemical and Physical a single normal-weight line.
+          // We remove the bottom border of the last Chemical body row; the Physical table draws the line.
+          if (hookData.section === 'body' && hookData.row.index === chemBody.length - 1) {
+            hookData.cell.styles.lineWidth = { top: 0.4, right: 0.4, bottom: 0, left: 0.4 };
+          }
+        },
     });
     chemY = (doc as any).lastAutoTable?.finalY || chemY;
     chemBottomY = chemY;
@@ -399,20 +409,27 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       theme: 'grid',
       tableWidth: itemRightWidth,
       margin: { left: itemSplitX },
-      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'center', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'center', valign: 'middle', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
       headStyles: { font: 'times', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'center', valign: 'middle', fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0] },
+      columnStyles: {
+        0: { cellWidth: itemRightWidth * 0.22, halign: 'center' },
+        1: { cellWidth: itemRightWidth * 0.22, halign: 'center' },
+        2: { cellWidth: itemRightWidth * 0.56, halign: 'center' },
+      },
     });
     rightStackY = (doc as any).lastAutoTable?.finalY || rightStackY;
   }
+  // Use one shared start Y for lower left/right sections so lines align straight across.
+  const lowerSectionStartY = Math.max(chemBottomY, rightStackY);
   if (heatTestBodyForRightPane.length > 0) {
     doc.autoTable({
       head: [[{ content: 'Heat Test Details', styles: { fontStyle: 'bold' } }]],
       body: heatTestBodyForRightPane,
-      startY: rightStackY,
+      startY: lowerSectionStartY,
       theme: 'grid',
       tableWidth: itemRightWidth,
       margin: { left: itemSplitX },
-      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, minCellHeight: 6, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
       headStyles: {
         font: 'times',
         fontStyle: 'bold',
@@ -422,6 +439,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         valign: 'middle',
         fontSize: 8,
         cellPadding: 1,
+        minCellHeight: 6,
         lineColor: [0, 0, 0],
       },
     });
@@ -433,7 +451,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   let leftColumnEndY = chemBottomY;
   if (lotDetailsArray.length > 0) {
     const physColumnWidth = itemLeftWidth * 0.5;
-    const physStartY = chemBottomY;
+    const physStartY = lowerSectionStartY;
     
     const normalizePhysicalKey = (value: string) =>
       value.trim().replace(/\s+/g, '').replace(/[.%]/g, '').toLowerCase();
@@ -478,7 +496,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       'Lot No.',
       ysHeader.uom ? `${ysHeader.name}\n${ysHeader.uom}` : ysHeader.name,
       utsHeader.uom ? `${utsHeader.name}\n${utsHeader.uom}` : utsHeader.name,
-      'Elongation%',
+      elongHeader.uom ? `${elongHeader.name}\n${elongHeader.uom}` : elongHeader.name,
       raHeader.uom ? `${raHeader.name}\n${raHeader.uom}` : raHeader.name,
       hardnessHeader.uom ? `${hardnessHeader.name}\n${hardnessHeader.uom}` : hardnessHeader.name,
     ];
@@ -564,6 +582,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         font: 'times',
         fontSize: 8,
         cellPadding: 1,
+        minCellHeight: 6,
         halign: 'center',
         textColor: [0, 0, 0],
         lineColor: [0, 0, 0],
@@ -577,6 +596,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         valign: 'middle',
         fontSize: 8,
         cellPadding: 1,
+        minCellHeight: 6,
         lineColor: [0, 0, 0],
       },
       columnStyles: physCharpyColumnStyles,
