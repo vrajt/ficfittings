@@ -105,6 +105,9 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     format: 'a4',
   }) as jsPDFWithAutoTable;
   doc.setFont('times', 'normal');
+  // Force all manually drawn text/lines to full black for dark print output.
+  doc.setTextColor(0, 0, 0);
+  doc.setDrawColor(0, 0, 0);
 
   const allLotData = await fetchAllLotDetails();
   // Keep a deterministic item order for PDF (same order basis across item table + lot sections).
@@ -169,13 +172,13 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   doc.text('Customer Name:', leftMargin + 2, currentY + 4.5);
   const customerNameLabelWidth = doc.getTextWidth('Customer Name:');
   const leftLabelDividerX = leftMargin + 2 + Math.max(customerNameLabelWidth, doc.getTextWidth('P.O.No. & Date:')) + 2.5;
-  doc.setFont('times', 'normal');
+  doc.setFont('times', 'bold');
   doc.text(certificate.AccName || '', leftLabelDividerX + 2, currentY + 4.5);
   
   // P.O.No. & Date
   doc.setFont('times', 'bold');
   doc.text('P.O.No. & Date:', leftMargin + 2, currentY + 10.5);
-  doc.setFont('times', 'normal');
+  doc.setFont('times', 'bold');
   doc.text(`${certificate.PoNo || ''} Date: ${poDate}`, leftLabelDividerX + 2, currentY + 10.5);
  
   // Right side - TC No. and Date on the same line
@@ -194,15 +197,16 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     rightLabelDividerX + 18,
     dateColumnRightX - doc.getTextWidth(dateText) - 4,
   );
-  doc.setFont('times', 'normal');
+  doc.setFont('times', 'bold');
   doc.text(dateText, rightTopEndX, currentY + 4.5, { align: 'right' });
   
   // Start Material
   doc.setFont('times', 'bold');
   doc.text('Start Material:', midPoint + 2, currentY + 10.5);
   const startMaterialLabelWidth = doc.getTextWidth('Start Material:');
-  doc.setFont('times', 'normal');
+  doc.setFont('times', 'bold');
   doc.text(certificate.SM_RM_Name || '', rightLabelDividerX + 2, currentY + 10.5);
+  doc.setFont('times', 'normal');
   
   doc.setLineWidth(0.4);
   // Internal row divider so top details appear in a clear 2x2 grid.
