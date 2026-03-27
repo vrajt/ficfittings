@@ -251,12 +251,12 @@ export function LotTestValueForm({ initialData, onSave, isEditing }: LotTestValu
   return (
     <Form {...form}>
       <form onSubmit={onFinalSubmit}>
-       <fieldset disabled={!isEditing} className="space-y-4">
+       <fieldset disabled={!isEditing} className="space-y-5">
         <ScrollArea className="h-[calc(100vh-220px)]">
-        <div className="space-y-4 p-1">
-            <div className="flex justify-between items-center sticky top-0 bg-background z-10 py-2">
-                <h2 className="text-xl font-semibold">Heat / Lot No: {initialData.HeatNo}</h2>
-                <Button type="submit" disabled={isSubmitting || !isEditing}>
+        <div className="space-y-5 p-1">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background py-2">
+                <h2 className="text-lg font-semibold md:text-xl">Heat / Lot No: {initialData.HeatNo}</h2>
+                <Button type="submit" size="sm" disabled={isSubmitting || !isEditing}>
                     {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save</>}
                 </Button>
             </div>

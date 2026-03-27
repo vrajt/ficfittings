@@ -865,7 +865,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Tabs defaultValue="document" className="w-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
             <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto w-full sm:w-auto">
@@ -898,8 +898,8 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
           </div>
           <div className="mt-6">
             <TabsContent value="document">
-              <div className="space-y-6">
-                <Card>
+              <div className="space-y-5">
+                <Card className="app-section">
                   <CardHeader>
                     <CardTitle>Document Details</CardTitle>
                     <CardDescription>Main document and company information.</CardDescription>
@@ -968,7 +968,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="app-section">
                   <CardHeader>
                     <CardTitle>Customer & Order Details</CardTitle>
                     <CardDescription>Information about the customer and their order.</CardDescription>
@@ -1019,7 +1019,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="app-section">
                   <CardHeader>
                     <CardTitle>Other Details</CardTitle>
                   </CardHeader>
@@ -1076,7 +1076,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
             </TabsContent>
             <TabsContent value="product">
               <div>
-                <Card>
+                <Card className="app-section">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Product Details</CardTitle>
                     <Button type="button" onClick={handleAddNewItem}><PlusCircle className="mr-2 h-4 w-4" /> Add New Item</Button>
@@ -1095,7 +1095,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                   </CardContent>
                 </Card>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                  <Card>
+                  <Card className="app-section">
                     <CardHeader><CardTitle>Chemical Composition</CardTitle></CardHeader>
                     <CardContent>
                       <Table>
@@ -1119,7 +1119,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
                       </Table>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="app-section">
                     <CardHeader><CardTitle>Mechanical Properties</CardTitle></CardHeader>
                     <CardContent>
                       <Table>
@@ -1147,7 +1147,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
               </div>
             </TabsContent>
             <TabsContent value="heat-test">
-              <Card>
+              <Card className="app-section">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Heat Test Details</CardTitle>
                   <Button type="button" onClick={handleAddNewHeatTest}>Add Heat Test</Button>
@@ -1167,7 +1167,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
               </Card>
             </TabsContent>
             <TabsContent value="other-test">
-              <Card>
+              <Card className="app-section">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Other Test Details</CardTitle>
                   <Button type="button" onClick={handleAddNewOtherTest}>Add Other Test</Button>
@@ -1187,7 +1187,7 @@ export function CertificateForm({ initialData, onSave }: CertificateFormProps) {
               </Card>
             </TabsContent>
             <TabsContent value="remarks">
-              <Card>
+              <Card className="app-section">
                 <CardHeader><CardTitle>Remarks</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-2">

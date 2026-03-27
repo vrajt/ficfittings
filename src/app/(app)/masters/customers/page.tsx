@@ -120,7 +120,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="app-page">
       <PageHeader
         title="Customer Master"
         description="Manage customer information."
@@ -135,7 +135,7 @@ export default function CustomersPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>

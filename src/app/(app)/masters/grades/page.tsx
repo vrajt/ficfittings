@@ -29,7 +29,7 @@ export default function GradesPage() {
   }, []);
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="app-page">
       <PageHeader
         title="Grade Master"
         description="Manage quality grades for products."

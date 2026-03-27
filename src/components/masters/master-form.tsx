@@ -132,8 +132,8 @@ export function MasterForm({ masterType, initialData, onSave }: MasterFormProps)
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 p-1 md:grid-cols-2">
               <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
                       <FormLabel>Unit Name</FormLabel>
@@ -179,10 +179,10 @@ export function MasterForm({ masterType, initialData, onSave }: MasterFormProps)
                   </FormItem>
               )}/>
           </div>
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end border-t pt-4">
               <Tooltip>
                   <TooltipTrigger asChild>
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button type="submit" disabled={isSubmitting} size="sm">
                       {isSubmitting ? (
                               <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

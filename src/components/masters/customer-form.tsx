@@ -113,8 +113,8 @@ export function CustomerForm({ initialData, onSave }: CustomerFormProps) {
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 p-1 md:grid-cols-2">
               <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
                       <FormLabel>Customer Name</FormLabel>
@@ -151,7 +151,7 @@ export function CustomerForm({ initialData, onSave }: CustomerFormProps) {
                   </FormItem>
               )}/>
                <FormField control={form.control} name="isBlocked" render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm md:col-span-2 mt-4">
+                  <FormItem className="mt-2 flex flex-row items-center justify-between rounded-lg border bg-card p-3 shadow-sm md:col-span-2">
                       <div className="space-y-0.5">
                           <FormLabel>Block Customer</FormLabel>
                           <FormMessage />
@@ -165,8 +165,8 @@ export function CustomerForm({ initialData, onSave }: CustomerFormProps) {
                   </FormItem>
               )}/>
           </div>
-          <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isSubmitting}>
+          <div className="flex justify-end border-t pt-4">
+              <Button type="submit" disabled={isSubmitting} size="sm">
               {isSubmitting ? (
                       <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

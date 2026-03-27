@@ -99,7 +99,7 @@ export default function TcRemarksPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="app-page">
       <PageHeader
         title="TC Remark Master"
         description="Manage standard remarks for test certificates."

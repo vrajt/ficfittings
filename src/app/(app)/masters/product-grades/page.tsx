@@ -106,7 +106,7 @@ export default function ProductGradesPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="app-page">
       <PageHeader
         title="Product Grade Master"
         description="Manage specific grades associated with products."

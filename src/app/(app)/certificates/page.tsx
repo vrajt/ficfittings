@@ -120,15 +120,15 @@ export default function CertificatesPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="app-page">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <PageHeader
           title="Test Certificates"
           description="Manage and generate test certificates."
           actionButtonText="New Certificate"
           onActionClick={handleAddNew}
         />
-        <Button variant="outline" onClick={() => setShowAll(prev => !prev)}>
+        <Button variant="outline" size="sm" className="border-primary/20 bg-background/80 hover:bg-primary/5" onClick={() => setShowAll(prev => !prev)}>
             {showAll ? <Calendar className="mr-2 h-4 w-4" /> : <Book className="mr-2 h-4 w-4" />}
             {showAll ? 'Show Current Year' : 'Show All Certificates'}
         </Button>

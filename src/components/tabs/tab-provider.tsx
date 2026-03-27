@@ -128,7 +128,7 @@ export function TabBar() {
   }
 
   return (
-    <div className="flex border-b" style={{backgroundColor: 'hsl(var(--tab-bar-background))'}}>
+    <div className="flex border-b border-border/80 bg-[hsl(var(--tab-bar-background))] px-2 pt-1">
       {tabs.map(tab => (
         <div
           key={tab.id}
@@ -138,10 +138,10 @@ export function TabBar() {
             color: 'hsl(var(--tab-active-foreground))' 
           } : {}}
           className={cn(
-            'flex items-center gap-2 py-2 px-4 border-r cursor-pointer text-sm group',
+            'group flex cursor-pointer items-center gap-2 rounded-t-lg border border-b-0 border-transparent px-3 py-2 text-sm transition-all',
             activeTab === tab.id 
-              ? 'font-semibold' 
-              : 'text-muted-foreground hover:bg-background/50'
+              ? 'border-border bg-background font-semibold text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-background/60 hover:text-foreground'
           )}
         >
           <span>{tab.title}</span>

@@ -81,11 +81,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <Sidebar collapsible="icon">
                     <AppSidebar />
                 </Sidebar>
-                <div className="flex flex-1 flex-col">
+                <div className="flex flex-1 flex-col bg-gradient-to-b from-background to-muted/30">
                     <AppHeader />
                     <SidebarInset>
                         <TabBar />
-                        <main className="flex-1 overflow-y-auto bg-muted/20">
+                        <main className="flex-1 overflow-y-auto">
                             <TabContent initialChildren={children} />
                         </main>
                     </SidebarInset>

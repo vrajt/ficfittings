@@ -319,7 +319,7 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
                     <Skeleton className="h-10 w-full sm:w-24" />
                 </div>
             </div>
-            <div className="rounded-lg border">
+            <div className="rounded-lg border bg-card shadow-sm">
                 <Skeleton className="h-[500px] w-full" />
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -336,7 +336,7 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="flex flex-col items-center justify-between gap-2 rounded-xl border border-border/80 bg-gradient-to-r from-card via-card to-accent/5 p-3 shadow-sm sm:flex-row">
         <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -344,7 +344,7 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
                     placeholder="Filter records..."
                     value={globalFilter}
                     onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-full sm:max-w-xs pl-9"
+                    className="w-full pl-9 sm:max-w-xs"
                 />
             </div>
             {hasDateColumn && (
@@ -409,14 +409,14 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
             </Tooltip>
         </div>
       </div>
-      <div className="rounded-lg border flex-1">
+      <div className="flex-1 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
         <ScrollArea className="h-[500px] w-full">
           <Table>
-            <TableHeader className="sticky top-0 bg-card z-10">
+            <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className={header.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card shadow-sm' : ''}>
+                    <TableHead key={header.id} className={header.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card/95 shadow-sm' : ''}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -432,10 +432,10 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
                     key={row.id} 
                     data-state={row.getIsSelected() && 'selected'}
                     onClick={() => onRowClick?.(row.original)}
-                    className={onRowClick ? 'cursor-pointer' : ''}
+                    className={cn(onRowClick ? 'cursor-pointer' : '', 'hover:bg-muted/40')}
                     >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card' : ''}>
+                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.sticky ? 'sticky right-0 bg-card/95' : ''}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
@@ -443,7 +443,7 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-sm text-muted-foreground">
                     No results.
                   </TableCell>
                 </TableRow>
@@ -453,7 +453,7 @@ export function DataTable<TData extends { id?: string | number; PId?: number; st
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 p-3 shadow-sm sm:flex-row">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.

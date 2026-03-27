@@ -205,7 +205,7 @@ export default function LotTestValuesPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="app-page">
       <PageHeader
         title="Lot Test Values"
         description="Manage chemical, physical, and impact test values for each lot."

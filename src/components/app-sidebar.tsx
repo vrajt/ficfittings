@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FileText, LogOut } from 'lucide-react';
-import { cva } from 'class-variance-authority';
 import {
   SidebarHeader,
   SidebarContent,
@@ -56,7 +55,7 @@ export default function AppSidebar() {
           <AccordionItem value={item.title} className="border-none">
              <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
                 <AccordionTrigger className={cn(
-                  "justify-between [&>svg:last-child]:data-[state=open]:rotate-180"
+                  "justify-between rounded-md px-2 py-2 text-sm [&>svg:last-child]:data-[state=open]:rotate-180"
                 )}>
                   <div className='flex items-center gap-2'>
                     <item.icon />
@@ -97,21 +96,21 @@ export default function AppSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-primary text-lg">
+      <SidebarHeader className="border-b border-sidebar-border/80 px-3 py-4">
+        <Link href="/dashboard" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-lg font-bold text-primary transition-colors hover:bg-sidebar-accent/70">
           <FileText className="h-6 w-6" />
-          <span>CertifyZen</span>
+          <span className="tracking-tight">CertifyZen</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
+        <SidebarMenu className="px-2 py-2.5">
           {navConfig.map(renderNavItem)}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border/70 px-2 pb-3 pt-2">
          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={logout} tooltip="Logout">
+                <SidebarMenuButton onClick={logout} tooltip="Logout" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
                     <LogOut />
                     <span>Logout</span>
                 </SidebarMenuButton>
@@ -121,7 +120,3 @@ export default function AppSidebar() {
     </>
   );
 }
-
-const sidebarMenuButtonVariants = cva(
-  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0"
-);

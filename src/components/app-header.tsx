@@ -27,7 +27,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Search } from "lucide-react";
 import { Input } from "./ui/input";
-import { useRouter } from "next/navigation";
 import { navConfig } from '@/lib/nav-config';
 import type { NavItem } from '@/lib/types';
 import { useTabs } from './tabs/tab-provider';
@@ -42,7 +41,6 @@ const branches = [
 ];
 
 export default function AppHeader() {
-  const router = useRouter();
   const { addTab } = useTabs();
   const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -87,12 +85,12 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-header-background/80 px-4 backdrop-blur-sm md:px-6" style={{backgroundColor: 'hsl(var(--header-background))'}}>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-header-background/95 px-4 backdrop-blur-md md:px-6" style={{ backgroundColor: 'hsl(var(--header-background))' }}>
       <div className="hidden md:block">
         <SidebarTrigger />
       </div>
 
-      <div className="flex items-center gap-4 flex-1">
+      <div className="flex flex-1 items-center gap-3">
         <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -102,7 +100,7 @@ export default function AppHeader() {
                         <Input
                         type="search"
                         placeholder="Search menus..."
-                        className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[320px]"
+                        className="w-full rounded-lg border-border/80 bg-card/90 pl-8 shadow-sm md:w-[220px] lg:w-[340px]"
                         value={searchQuery}
                         onChange={handleSearchChange}
                         />
@@ -113,7 +111,7 @@ export default function AppHeader() {
                 </Tooltip>
               </PopoverAnchor>
             </div>
-          <PopoverContent className="w-[320px] p-0" align="start">
+          <PopoverContent className="w-[340px] rounded-xl border-border/80 p-0 shadow-lg" align="start">
             <Command>
               <div className="p-2">
               {filteredNavItems.length > 0 ? (
@@ -121,7 +119,7 @@ export default function AppHeader() {
                     <Button
                       key={item.href}
                       variant="ghost"
-                      className="w-full justify-start font-normal text-xs"
+                      className="h-9 w-full justify-start rounded-md font-normal text-xs hover:bg-muted/80"
                       onClick={() => handleSearchItemClick(item)}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
@@ -141,7 +139,7 @@ export default function AppHeader() {
         <Select value={selectedBranch} onValueChange={setSelectedBranch}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <SelectTrigger className="w-[180px] bg-card">
+                    <SelectTrigger className="h-9 w-[180px] rounded-lg border-border/80 bg-card/90 shadow-sm">
                         <SelectValue placeholder="Select a branch" />
                     </SelectTrigger>
                 </TooltipTrigger>
@@ -157,10 +155,10 @@ export default function AppHeader() {
         </Select>
       </div>
 
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-2">
         <Tooltip>
             <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted/80">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Toggle notifications</span>
                 </Button>
@@ -173,7 +171,7 @@ export default function AppHeader() {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full">
+                        <Button variant="secondary" size="icon" className="rounded-full border border-border/70 shadow-sm">
                         <Avatar>
                             <AvatarImage src="https://placehold.co/100x100.png" alt="Admin" data-ai-hint="user avatar" />
                             <AvatarFallback>AD</AvatarFallback>

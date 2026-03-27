@@ -8,14 +8,16 @@ import * as React from 'react';
 import axios from 'axios';
 import type { TcMain, Customer } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, DonutChart } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 
 interface DashboardStats {
   totalCertificates: number;
   monthlyCertificates: number;
+  weeklyCertificates: number;
   activeCustomers: number;
+  blockedCustomers: number;
   mastersConfigured: { name: string, count: number }[];
 }
 
@@ -87,11 +89,23 @@ export default function DashboardPage() {
           const certDate = new Date(c.DocDate);
           return certDate.getMonth() === currentMonth && certDate.getFullYear() === currentYear;
         }).length;
+
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        const weeklyCertificates = allCerts.filter((c) => {
+          const certDate = new Date(c.DocDate);
+          return certDate >= sevenDaysAgo && certDate <= now;
+        }).length;
+
+        const activeCustomers = allCustomers.filter(c => !c.isBlocked).length;
+        const blockedCustomers = allCustomers.filter(c => c.isBlocked).length;
         
         setStats({
           totalCertificates: allCerts.length,
           monthlyCertificates: monthlyCertificates,
-          activeCustomers: allCustomers.filter(c => !c.isBlocked).length,
+          weeklyCertificates,
+          activeCustomers,
+          blockedCustomers,
           mastersConfigured: mastersCounts,
         });
         
@@ -162,13 +176,14 @@ export default function DashboardPage() {
   };
 
   const kpiData = [
-    { title: "Total Certificates", value: stats?.totalCertificates, icon: FileText, color: "text-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/50" },
-    { title: "Active Customers", value: stats?.activeCustomers, icon: Users, color: "text-green-500", bgColor: "bg-green-100 dark:bg-green-900/50" },
-    { title: "Issued This Month", value: stats?.monthlyCertificates, icon: CheckCircle, color: "text-orange-500", bgColor: "bg-orange-100 dark:bg-orange-900/50" },
+    { title: "Total Certificates", value: stats?.totalCertificates, icon: FileText, iconClassName: "text-primary", badgeClassName: "bg-primary/10" },
+    { title: "Issued This Month", value: stats?.monthlyCertificates, icon: CheckCircle, iconClassName: "text-accent", badgeClassName: "bg-accent/10" },
+    { title: "Issued (Last 7 Days)", value: stats?.weeklyCertificates, icon: BarChart3, iconClassName: "text-chart-4", badgeClassName: "bg-chart-4/15" },
+    { title: "Active Customers", value: stats?.activeCustomers, icon: Users, iconClassName: "text-chart-2", badgeClassName: "bg-chart-2/15" },
   ];
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-6 lg:p-8">
+    <div className="app-page flex flex-col gap-8">
       <PageHeader
         title="Welcome, Admin!"
         description="Here's a snapshot of your certification activities."
@@ -178,11 +193,11 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {kpiData.map((kpi) => (
-            <Card key={kpi.title}>
+            <Card key={kpi.title} className="app-section">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${kpi.bgColor}`}>
-                    <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${kpi.badgeClassName}`}>
+                    <kpi.icon className={`h-4 w-4 ${kpi.iconClassName}`} />
                 </div>
                 </CardHeader>
                 <CardContent>
@@ -194,11 +209,11 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
             ))}
-             <Card>
+             <Card className="app-section">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">Masters Configured</CardTitle>
-                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/50">
-                        <Settings className="h-4 w-4 text-purple-500" />
+                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                        <Settings className="h-4 w-4 text-foreground/70" />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -220,7 +235,7 @@ export default function DashboardPage() {
 
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-5">
+            <Card className="app-section lg:col-span-5">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Certificates Issued (Last 12 Months)</CardTitle>
             </CardHeader>
@@ -248,7 +263,7 @@ export default function DashboardPage() {
             </Card>
             
             <div className="lg:col-span-2 grid gap-6">
-                <Card>
+                <Card className="app-section">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5" /> Branch Performance</CardTitle>
                     </CardHeader>
@@ -268,7 +283,7 @@ export default function DashboardPage() {
                         )}
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="app-section">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Top 5 Customers</CardTitle>
                     </CardHeader>
@@ -295,7 +310,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+            <Card className="app-section lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><List className="h-5 w-5" /> Recent Certificates</CardTitle>
             </CardHeader>
@@ -326,7 +341,7 @@ export default function DashboardPage() {
                 )}
             </CardContent>
             </Card>
-            <Card>
+            <Card className="app-section">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LinkIcon className="h-5 w-5" /> Quick Links</CardTitle>
                  <CardDescription>Navigate to key areas of the application.</CardDescription>
