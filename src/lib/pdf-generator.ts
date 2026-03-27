@@ -669,8 +669,8 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         tableWidth: remarksColumnWidth,
         margin: { left: leftMargin },
         // Keep minimal padding so more remark lines can fit in the same footer area.
-        styles: { lineWidth: 0, font: 'times', fontSize: 8, cellPadding: { top: 0.35, right: 0.7, bottom: 0.35, left: 0.7 }, halign: 'left', textColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 8, cellPadding: { top: 0.45, right: 0.7, bottom: 0.45, left: 0.7 }, lineWidth: 0 },
+        styles: { lineWidth: 0, font: 'times', fontSize: 7.5, cellPadding: { top: 0.2, right: 0.5, bottom: 0.2, left: 0.5 }, halign: 'left', textColor: [0, 0, 0] },
+        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 7.5, cellPadding: { top: 0.3, right: 0.5, bottom: 0.3, left: 0.5 }, lineWidth: 0 },
         bodyStyles: { lineWidth: 0 },
     });
   }
