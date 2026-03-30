@@ -143,7 +143,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const contentStartY = 45;
 
   // --- Title Header ---
-  doc.setFontSize(10).setFont('times', 'bold');
+  doc.setFontSize(12).setFont('times', 'bold');
   doc.text('TEST CERTIFICATE', pageWidth / 2, 40, { align: 'center'});
   // Draw once more with tiny offset to make title visually bolder.
   doc.text('TEST CERTIFICATE', pageWidth / 2 + 0.1, 40, { align: 'center'});
@@ -228,20 +228,10 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     ])
     .filter((row) => row.some((cell) => cell));
 
-  // Keep right-side heat rows aligned with lot-based rows on the left.
+  // Only actual heat-treat rows (no blank padding rows). One heat = one line.
   const heatTestBodyForRightPane =
-    lotDetailsArray.length > 0
-      ? lotDetailsArray.map((_, lotIndex) => {
-          if (
-            certificate.heatTreatDetails &&
-            certificate.heatTreatDetails.length > 0 &&
-            lotIndex < certificate.heatTreatDetails.length
-          ) {
-            const test = certificate.heatTreatDetails[lotIndex];
-            return [`${lotIndex + 1}. ${test.Heat_Desc}`];
-          }
-          return [''];
-        })
+    certificate.heatTreatDetails && certificate.heatTreatDetails.length > 0
+      ? certificate.heatTreatDetails.map((test, index) => [`${index + 1}. ${test.Heat_Desc}`])
       : [];
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
@@ -618,38 +608,37 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   currentY = midSectionEndY;
 
-  // --- Other Test Details (Full Width) ---
+  // --- Other Test Details (Full Width) — always show section; empty when no data ---
   const otherTestDetails = certificate.otherTestDetails || [];
-  if (otherTestDetails.length > 0) {
-    // Combine all test details into one row separated by commas
-    const combinedText = otherTestDetails.map((test, index) => `${index + 1}. ${test.Test_Desc}`).join(', ');
-    const otherTestBody = [[combinedText]];
+  const combinedOtherText =
+    otherTestDetails.length > 0
+      ? otherTestDetails.map((test, index) => `${index + 1}. ${test.Test_Desc}`).join(', ')
+      : '';
+  const otherTestBody = [[combinedOtherText]];
 
-    doc.autoTable({
-      head: [[{ content: 'Other Test Details', styles: { fontStyle: 'bold' } }]],
-      body: otherTestBody,
-      startY: currentY,
-      theme: 'grid',
-      tableWidth: contentWidth,
-      margin: { left: leftMargin, right: rightMargin },
-      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
-      headStyles: {
-        fontStyle: 'bold',
-        fillColor: [255, 255, 255],
-        textColor: [0, 0, 0],
-        halign: 'left',
-        valign: 'middle',
-        fontSize: 8,
-        cellPadding: 1,
-        lineColor: [0, 0, 0],
-      },
-    });
-    currentY = (doc as any).lastAutoTable?.finalY || currentY;
-    
-    // Add a line below Other Test Details
-    doc.setLineWidth(0.4);
-    doc.line(leftMargin, currentY, leftMargin + contentWidth, currentY);
-  }
+  doc.autoTable({
+    head: [[{ content: 'Other Test Details', styles: { fontStyle: 'bold' } }]],
+    body: otherTestBody,
+    startY: currentY,
+    theme: 'grid',
+    tableWidth: contentWidth,
+    margin: { left: leftMargin, right: rightMargin },
+    styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: 1, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      halign: 'left',
+      valign: 'middle',
+      fontSize: 8,
+      cellPadding: 1,
+      lineColor: [0, 0, 0],
+    },
+  });
+  currentY = (doc as any).lastAutoTable?.finalY || currentY;
+
+  doc.setLineWidth(0.4);
+  doc.line(leftMargin, currentY, leftMargin + contentWidth, currentY);
 
   // --- Three-Column Layout: Remarks, Surveyor and Signature (at footer) ---
   const remarksColumnWidth = contentWidth * 0.43;
