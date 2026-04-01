@@ -416,14 +416,16 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   // Use one shared start Y for lower left/right sections so lines align straight across.
   const lowerSectionStartY = Math.max(chemBottomY, rightStackY);
   if (heatTestBodyForRightPane.length > 0) {
+    const heatStartY = lowerSectionStartY;
+    let heatHeaderBottomY: number | null = null;
     doc.autoTable({
       head: [[{ content: 'Heat Test Details', styles: { fontStyle: 'bold' } }]],
       body: heatTestBodyForRightPane,
-      startY: lowerSectionStartY,
-      theme: 'grid',
+      startY: heatStartY,
+      theme: 'plain',
       tableWidth: itemRightWidth,
       margin: { left: itemSplitX },
-      styles: { lineWidth: 0.4, font: 'times', fontSize: 8, cellPadding: { top: 0.6, bottom: 0.6, left: 1, right: 1 }, minCellHeight: 6, halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0] },
+      styles: { lineWidth: 0, font: 'times', fontSize: 9, cellPadding: { top: 0.7, bottom: 0.7, left: 1, right: 1 }, minCellHeight: 6.4, halign: 'left', textColor: [0, 0, 0] },
       headStyles: {
         font: 'times',
         fontStyle: 'bold',
@@ -431,13 +433,38 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         textColor: [0, 0, 0],
         halign: 'center',
         valign: 'middle',
-        fontSize: 8,
-        cellPadding: { top: 0.7, bottom: 0.7, left: 1, right: 1 },
-        minCellHeight: 6,
-        lineColor: [0, 0, 0],
+        fontSize: 9,
+        // Match Physical/Charpy header metrics so the separator line is perfectly straight across.
+        cellPadding: { top: 0.5, bottom: 0.5, left: 1, right: 1 },
+        minCellHeight: 6.6,
+        lineHeight: 1.1,
+        lineWidth: 0,
+      },
+      bodyStyles: { lineWidth: 0 },
+      didDrawCell: (hookData: any) => {
+        if (
+          heatHeaderBottomY === null &&
+          hookData.section === 'head' &&
+          hookData.row.index === 0 &&
+          hookData.column.index === 0
+        ) {
+          heatHeaderBottomY = hookData.cell.y + hookData.cell.height;
+        }
       },
     });
-    rightStackY = (doc as any).lastAutoTable?.finalY || rightStackY;
+    const heatFinalY = (doc as any).lastAutoTable?.finalY || heatStartY;
+    // Keep ONLY the header line; remove bottom border line.
+    doc.setLineWidth(0.4);
+    // Left + right borders
+    doc.line(itemSplitX, heatStartY, itemSplitX, heatFinalY);
+    doc.line(itemSplitX + itemRightWidth, heatStartY, itemSplitX + itemRightWidth, heatFinalY);
+    // Top border
+    doc.line(itemSplitX, heatStartY, itemSplitX + itemRightWidth, heatStartY);
+    // Header separator
+    if (heatHeaderBottomY !== null) {
+      doc.line(itemSplitX, heatHeaderBottomY, itemSplitX + itemRightWidth, heatHeaderBottomY);
+    }
+    rightStackY = heatFinalY;
   }
   rightPaneBottomY = rightStackY;
 
@@ -596,7 +623,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         halign: 'center',
         valign: 'middle',
         fontSize: 8,
-        cellPadding: { top: 0.8, bottom: 0.8, left: 1, right: 1 },
+        cellPadding: { top: 0.5, bottom: 0.5, left: 1, right: 1 },
         minCellHeight: 6.6,
         lineHeight: 1.1,
         lineColor: [0, 0, 0],
