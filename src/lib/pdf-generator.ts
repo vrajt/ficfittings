@@ -236,8 +236,18 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  // If items are less than 5, keep 6 visible lines; otherwise use actual count.
-  const requiredRows = orderedItems.length < 5 ? 6 : orderedItems.length;
+  // Baseline: <5 items → 6 rows. For 1 or 2 items, add extra blank rows on top of that baseline.
+  const itemCount = orderedItems.length;
+  let requiredRows: number;
+  if (itemCount === 1) {
+    requiredRows = 6 + 3;
+  } else if (itemCount === 2) {
+    requiredRows = 6 + 2;
+  } else if (itemCount < 5) {
+    requiredRows = 6;
+  } else {
+    requiredRows = itemCount;
+  }
   const itemTableStartY = currentY;
 
   for (let i = 0; i < requiredRows; i++) {
