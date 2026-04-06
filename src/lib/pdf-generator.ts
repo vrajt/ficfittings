@@ -234,19 +234,49 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
       ? certificate.heatTreatDetails.map((test, index) => [`${index + 1}. ${test.Heat_Desc}`])
       : [];
 
+  // Chemical columns (same uniqueness rules as Chemical Composition table below).
+  const allChemElements: string[] = [];
+  const seenChemElements = new Set<string>();
+  lotDetailsArray.forEach((lot) => {
+    lot.ChemicalComp.forEach((cc) => {
+      const rawElement = (cc.Element || '').trim();
+      if (!rawElement) return;
+      const normalized = rawElement.replace(/\s+/g, '').replace(/%/g, '').toLowerCase();
+      if (!seenChemElements.has(normalized)) {
+        seenChemElements.add(normalized);
+        allChemElements.push(rawElement);
+      }
+    });
+  });
+
+  const headerSourceLotForItemPad =
+    lotDetailsArray.find(
+      (lot) => (lot.HeatNo || '').trim().toLowerCase() === firstItemHeatNo.toLowerCase(),
+    ) || lotDetailsArray[0];
+  const physicalPropCountForItemPad = headerSourceLotForItemPad
+    ? headerSourceLotForItemPad.PhysicalProp.filter((pp) => (pp.Property || '').trim().length > 0).length
+    : 0;
+
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  // Baseline: <5 items → 6 rows. For 1 or 2 items, add extra blank rows on top of that baseline.
+  // <5 items → 6 rows except: 1 item → 12 rows, 2 items → 11 rows. ≥5 → one row per item.
+  // Extra blank rows: 5 items + 2 chem elements → +3; 4 items + 2 physical props (header lot) → +4.
   const itemCount = orderedItems.length;
   let requiredRows: number;
-  if (itemCount === 1) {
-    requiredRows = 6 + 3;
-  } else if (itemCount === 2) {
-    requiredRows = 6 + 2;
-  } else if (itemCount < 5) {
-    requiredRows = 6;
-  } else {
+  if (itemCount >= 5) {
     requiredRows = itemCount;
+  } else if (itemCount === 1) {
+    requiredRows = 12;
+  } else if (itemCount === 2) {
+    requiredRows = 11;
+  } else {
+    requiredRows = 6;
+  }
+  if (itemCount === 5 && allChemElements.length === 2) {
+    requiredRows += 3;
+  }
+  if (itemCount === 4 && physicalPropCountForItemPad === 2) {
+    requiredRows += 4;
   }
   const itemTableStartY = currentY;
 
@@ -334,22 +364,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   let chemBottomY = itemSectionEndY;
   let rightPaneBottomY = itemSectionEndY;
   let chemY = itemSectionEndY;
-  
-  // Keep chemical columns in first-seen data order across lots (no hardcoded standard ordering).
-  const allChemElements: string[] = [];
-  const seenChemElements = new Set<string>();
-  lotDetailsArray.forEach((lot) => {
-    lot.ChemicalComp.forEach((cc) => {
-      const rawElement = (cc.Element || '').trim();
-      if (!rawElement) return;
-      const normalized = rawElement.replace(/\s+/g, '').replace(/%/g, '').toLowerCase();
-      if (!seenChemElements.has(normalized)) {
-        seenChemElements.add(normalized);
-        allChemElements.push(rawElement);
-      }
-    });
-  });
-  
+
   if (lotDetailsArray.length > 0 && allChemElements.length > 0) {
     const chemBody = lotDetailsArray.map(lot => {
         const row: (string | number)[] = [lot.HeatNo];
@@ -705,7 +720,7 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
         // Keep minimal padding so more remark lines can fit in the same footer area.
         styles: { lineWidth: 0, font: 'times', fontSize: 7.5, cellPadding: { top: 0.2, right: 0.5, bottom: 0.2, left: 0.5 }, halign: 'left', textColor: [0, 0, 0] },
         headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 7.5, cellPadding: { top: 0.3, right: 0.5, bottom: 0.3, left: 0.5 }, lineWidth: 0 },
-        bodyStyles: { lineWidth: 0 },
+        bodyStyles: { lineWidth: 0, fontSize: 8.5 },
     });
   }
 
