@@ -249,35 +249,23 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
     });
   });
 
-  const headerSourceLotForItemPad =
-    lotDetailsArray.find(
-      (lot) => (lot.HeatNo || '').trim().toLowerCase() === firstItemHeatNo.toLowerCase(),
-    ) || lotDetailsArray[0];
-  const physicalPropCountForItemPad = headerSourceLotForItemPad
-    ? headerSourceLotForItemPad.PhysicalProp.filter((pp) => (pp.Property || '').trim().length > 0).length
-    : 0;
+  // Item / Chemical / Physical row budget (fixed total 12 for A+B+C in layout terms):
+  // R = item data rows, L = unique LOT (HeatNo). Chemical & Physical bodies use one row per lot → B=C=L.
+  // Invariant: R + 2L ≤ 12. Item table height (data + empty) targets (12 − 2L); if R exceeds that, show all items.
+  const uniqueLotKeys = new Set<string>();
+  orderedItems.forEach((item) => {
+    const heat = (item.HeatNo || '').trim();
+    if (heat) uniqueLotKeys.add(heat.toLowerCase());
+  });
+  const L = uniqueLotKeys.size;
+  const R = orderedItems.length;
+  const ROW_BUDGET_TOTAL = 12;
+  const itemSectionTargetRows = ROW_BUDGET_TOTAL - 2 * L;
 
   // --- Item table: single autoTable so every row has one shared height (avoids misaligned horizontals from two tables) ---
   const itemDescriptionBody: (string | number)[][] = [];
-  // <5 items → 6 rows except: 1 item → 12 rows, 2 items → 11 rows. ≥5 → one row per item.
-  // Extra blank rows: 5 items + 2 chem elements → +3; 4 items + 2 physical props (header lot) → +4.
-  const itemCount = orderedItems.length;
-  let requiredRows: number;
-  if (itemCount >= 5) {
-    requiredRows = itemCount;
-  } else if (itemCount === 1) {
-    requiredRows = 12;
-  } else if (itemCount === 2) {
-    requiredRows = 11;
-  } else {
-    requiredRows = 6;
-  }
-  if (itemCount === 5 && allChemElements.length === 2) {
-    requiredRows += 3;
-  }
-  if (itemCount === 4 && physicalPropCountForItemPad === 2) {
-    requiredRows += 4;
-  }
+  const itemCount = R;
+  const requiredRows = Math.max(itemCount, Math.max(0, itemSectionTargetRows));
   const itemTableStartY = currentY;
 
   for (let i = 0; i < requiredRows; i++) {
@@ -707,22 +695,24 @@ export const generateCertificatePDF = async (certificate: TcMain) => {
   const remarksStartY = currentY;
   const footerLineY = footerEndY; // Footer line position
 
-  // --- Left Column: Remarks (with header table, stops before footer line) ---
-  const remarksBody = certificate.remarks.map((remark, index) => [`${index + 1}. ${remark.TcTerms}`]);
-  if (remarksBody.length > 0) {
-    doc.autoTable({
-        head: [[{ content: 'Remarks', styles: { fontStyle: 'bold' } }]],
-        body: remarksBody,
-        startY: remarksStartY,
-        theme: 'plain',
-        tableWidth: remarksColumnWidth,
-        margin: { left: leftMargin },
-        // Keep minimal padding so more remark lines can fit in the same footer area.
-        styles: { lineWidth: 0, font: 'times', fontSize: 7.5, cellPadding: { top: 0.2, right: 0.5, bottom: 0.2, left: 0.5 }, halign: 'left', textColor: [0, 0, 0] },
-        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 7.5, cellPadding: { top: 0.3, right: 0.5, bottom: 0.3, left: 0.5 }, lineWidth: 0 },
-        bodyStyles: { lineWidth: 0, fontSize: 8.5 },
-    });
+  // --- Left Column: Remarks (exactly 5 body lines: cap at 5 texts, pad with blanks — no extra height from long lists) ---
+  const remarksSource = certificate.remarks ?? [];
+  const remarksBody: string[][] = [];
+  for (let i = 0; i < 5; i++) {
+    const remark = remarksSource[i];
+    remarksBody.push(remark ? [`${i + 1}. ${remark.TcTerms}`] : ['']);
   }
+  doc.autoTable({
+    head: [[{ content: 'Remarks', styles: { fontStyle: 'bold' } }]],
+    body: remarksBody,
+    startY: remarksStartY,
+    theme: 'plain',
+    tableWidth: remarksColumnWidth,
+    margin: { left: leftMargin },
+    styles: { lineWidth: 0, font: 'times', fontSize: 7.5, cellPadding: { top: 0.2, right: 0.5, bottom: 0.2, left: 0.5 }, halign: 'left', textColor: [0, 0, 0] },
+    headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], halign: 'left', valign: 'middle', fontSize: 7.5, cellPadding: { top: 0.3, right: 0.5, bottom: 0.3, left: 0.5 }, lineWidth: 0 },
+    bodyStyles: { lineWidth: 0, fontSize: 8.5, minCellHeight: 4.2 },
+  });
 
   // Draw a clean full-height border for the remarks block so its right edge
   // aligns in length and weight with adjacent section borders.
